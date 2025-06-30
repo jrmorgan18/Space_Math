@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Space Math Adventure</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game">
+    <header>
+      <h1>Space Math Adventure</h1>
+      <div id="status">
+        <span id="score">Score: 0</span>
+        <span id="lives">Lives: 3</span>
+      </div>
+    </header>
+    <section id="animation-area">
+      <div id="rocket">🚀</div>
+      <div id="planet">🪐</div>
+    </section>
+    <section id="message"></section>
+    <section id="question-area" class="hidden">
+      <div id="question"></div>
+      <button id="speak-btn" aria-label="Read question">🔊</button>
+      <div id="options"></div>
+    </section>
+    <div id="start-screen">
+      <button id="start-btn">Start Mission</button>
+    </div>
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>
