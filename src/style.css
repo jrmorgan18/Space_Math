@@ -1,0 +1,67 @@
+body {
+    background: radial-gradient(circle at bottom, #000015, #000);
+    color: #fff;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    padding: 10px;
+}
+
+#scoreboard {
+    margin-top: 5px;
+}
+
+#game-area {
+    margin-top: 20px;
+}
+
+#solar-system {
+    position: relative;
+    height: 120px;
+    overflow: hidden;
+}
+
+#rocket {
+    position: absolute;
+    left: 0;
+    top: 40px;
+    font-size: 32px;
+    transition: left 1s;
+}
+
+.planet {
+    position: absolute;
+    top: 60px;
+    font-size: 28px;
+}
+
+#planet1 { left: 50px; }
+#planet2 { left: 100px; }
+#planet3 { left: 150px; }
+#planet4 { left: 200px; }
+#planet5 { left: 250px; }
+#planet6 { left: 300px; }
+#planet7 { left: 350px; }
+
+#question-container {
+    margin-top: 20px;
+}
+
+button {
+    margin: 5px;
+    padding: 8px 12px;
+    font-size: 16px;
+}
+
+.star {
+    animation: twinkle 1s ease forwards;
+}
+
+@keyframes twinkle {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1.5); opacity: 1; }
+}
