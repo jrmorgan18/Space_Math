@@ -1,0 +1,46 @@
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(#000428, #004e92);
+    color: #fff;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+}
+#game {
+    max-width: 600px;
+    margin: auto;
+    padding: 20px;
+}
+#header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+#level-info {
+    margin: 20px 0;
+    font-size: 1.5em;
+}
+#question-area {
+    margin: 20px 0;
+}
+#options button {
+    display: block;
+    margin: 10px auto;
+    padding: 10px 20px;
+    font-size: 1em;
+}
+#start-btn {
+    padding: 10px 20px;
+    font-size: 1em;
+}
+canvas {
+    display: block;
+    margin: 20px auto;
+    background: transparent;
+}
+.correct {
+    background-color: green;
+}
+.incorrect {
+    background-color: red;
+}
