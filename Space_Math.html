@@ -1,67 +1,480 @@
-body {
-  font-family: Arial, sans-serif;
-  background: radial-gradient(circle at center, #00111a, #000000);
-  color: #fff;
-  text-align: center;
-  margin: 0;
-  padding: 0;
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Math Adventure</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(-25%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
+            50% { transform: translateY(0); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+        }
+        .animate-bounce { animation: bounce 1s infinite; }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin { animation: spin 1s linear infinite; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        // Icons as simple SVG components
+        const Rocket = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 00-2.91-.09z"/>
+                <path d="M12 15l-3-3a22 22 0 012-3.95A12.88 12.88 0 0122 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 01-4 2z"/>
+                <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/>
+                <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>
+            </svg>
+        );
+        
+        const Star = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+        );
+        
+        const Heart = ({ filled }) => (
+            <svg width="28" height="28" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+            </svg>
+        );
+        
+        const Volume2 = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/>
+            </svg>
+        );
+        
+        const Award = () => (
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="8" r="7"/>
+                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+            </svg>
+        );
+        
+        const Sparkles = () => (
+            <svg width="100" height="100" viewBox="0 0 24 24" fill="currentColor" className="animate-spin">
+                <path d="M12 0l3.09 6.26L22 7.27l-5 4.87 1.18 6.88L12 15.77l-6.18 3.25L7 12.14 2 7.27l6.91-1.01L12 0z"/>
+            </svg>
+        );
 
-header {
-  padding: 10px;
-}
+        const SpaceMathGame = () => {
+            const [gameState, setGameState] = useState('menu');
+            const [currentLevel, setCurrentLevel] = useState(0);
+            const [currentQuestion, setCurrentQuestion] = useState(0);
+            const [lives, setLives] = useState(3);
+            const [score, setScore] = useState(0);
+            const [selectedAnswer, setSelectedAnswer] = useState(null);
+            const [showFeedback, setShowFeedback] = useState(false);
+            const [isCorrect, setIsCorrect] = useState(false);
+            const [questions, setQuestions] = useState([]);
+            const [rocketPosition, setRocketPosition] = useState(0);
+            const [showStars, setShowStars] = useState(false);
 
-#status {
-  margin-top: 5px;
-}
+            const levels = [
+                { name: 'Earth Orbit', type: 'addition-basic', planet: '🌍', difficulty: 1 },
+                { name: 'Moon Base', type: 'counting-ones', planet: '🌙', difficulty: 1 },
+                { name: 'Mars Colony', type: 'subtraction-basic', planet: '🔴', difficulty: 2 },
+                { name: 'Jupiter Station', type: 'counting-fives', planet: '🟠', difficulty: 2 },
+                { name: 'Saturn Rings', type: 'patterns', planet: '🪐', difficulty: 3 },
+                { name: 'Neptune Deep', type: 'counting-tens', planet: '🔵', difficulty: 3 },
+                { name: 'Asteroid Field', type: 'comparison', planet: '☄️', difficulty: 4 },
+                { name: 'Alpha Centauri', type: 'multiplication-easy', planet: '⭐', difficulty: 4 },
+                { name: 'Nebula Core', type: 'addition-advanced', planet: '🌌', difficulty: 5 },
+                { name: 'Galaxy Center', type: 'multiplication-hard', planet: '🌠', difficulty: 5 }
+            ];
 
-#animation-area {
-  position: relative;
-  width: 100%;
-  height: 200px;
-  overflow: hidden;
-}
+            const generateQuestions = (type, count = 10) => {
+                const questionSet = [];
+                
+                for (let i = 0; i < count; i++) {
+                    let question, correctAnswer, wrongAnswers;
+                    
+                    switch (type) {
+                        case 'addition-basic':
+                            const a1 = Math.floor(Math.random() * 10);
+                            const b1 = Math.floor(Math.random() * 10);
+                            question = `${a1} + ${b1} = ?`;
+                            correctAnswer = a1 + b1;
+                            wrongAnswers = [correctAnswer + 1, correctAnswer - 1];
+                            if (wrongAnswers[1] < 0) wrongAnswers[1] = correctAnswer + 2;
+                            break;
+                            
+                        case 'addition-advanced':
+                            const a2 = Math.floor(Math.random() * 90) + 10;
+                            const b2 = Math.floor(Math.random() * 10);
+                            question = `${a2} + ${b2} = ?`;
+                            correctAnswer = a2 + b2;
+                            wrongAnswers = [correctAnswer + 5, correctAnswer - 3];
+                            break;
+                            
+                        case 'subtraction-basic':
+                            const a3 = Math.floor(Math.random() * 10) + 5;
+                            const b3 = Math.floor(Math.random() * Math.min(5, a3));
+                            question = `${a3} - ${b3} = ?`;
+                            correctAnswer = a3 - b3;
+                            wrongAnswers = [correctAnswer + 1, correctAnswer + 2];
+                            if (correctAnswer === 0) wrongAnswers = [1, 2];
+                            break;
+                            
+                        case 'multiplication-easy':
+                            const mult = Math.random() < 0.5 ? 2 : 3;
+                            const b4 = Math.floor(Math.random() * 10) + 1;
+                            question = `${mult} × ${b4} = ?`;
+                            correctAnswer = mult * b4;
+                            wrongAnswers = [correctAnswer + mult, correctAnswer - mult];
+                            if (wrongAnswers[1] <= 0) wrongAnswers[1] = correctAnswer + mult * 2;
+                            break;
+                            
+                        case 'multiplication-hard':
+                            const a5 = Math.floor(Math.random() * 9) + 2;
+                            const b5 = Math.floor(Math.random() * 10) + 1;
+                            question = `${a5} × ${b5} = ?`;
+                            correctAnswer = a5 * b5;
+                            wrongAnswers = [correctAnswer + a5, correctAnswer - a5];
+                            if (wrongAnswers[1] <= 0) wrongAnswers[1] = correctAnswer + a5 * 2;
+                            break;
+                            
+                        case 'counting-ones':
+                            const start1 = Math.floor(Math.random() * 90);
+                            const gap1 = Math.floor(Math.random() * 5) + 3;
+                            const sequence1 = [start1, start1 + 1, start1 + 2, '?', start1 + 4];
+                            question = `Count: ${sequence1.join(', ')}`;
+                            correctAnswer = start1 + 3;
+                            wrongAnswers = [correctAnswer + 1, correctAnswer - 1];
+                            break;
+                            
+                        case 'counting-fives':
+                            const start5 = Math.floor(Math.random() * 16) * 5;
+                            const pos = Math.floor(Math.random() * 3) + 1;
+                            const sequence5 = [];
+                            for (let j = 0; j < 5; j++) {
+                                sequence5.push(j === pos ? '?' : start5 + j * 5);
+                            }
+                            question = `Count by 5s: ${sequence5.join(', ')}`;
+                            correctAnswer = start5 + pos * 5;
+                            wrongAnswers = [correctAnswer + 5, correctAnswer - 5];
+                            if (wrongAnswers[1] < 0) wrongAnswers[1] = correctAnswer + 10;
+                            break;
+                            
+                        case 'counting-tens':
+                            const start10 = Math.floor(Math.random() * 16) * 10;
+                            const pos10 = Math.floor(Math.random() * 3) + 1;
+                            const sequence10 = [];
+                            for (let j = 0; j < 5; j++) {
+                                sequence10.push(j === pos10 ? '?' : start10 + j * 10);
+                            }
+                            question = `Count by 10s: ${sequence10.join(', ')}`;
+                            correctAnswer = start10 + pos10 * 10;
+                            wrongAnswers = [correctAnswer + 10, correctAnswer - 10];
+                            if (wrongAnswers[1] < 0) wrongAnswers[1] = correctAnswer + 20;
+                            break;
+                            
+                        case 'patterns':
+                            const patterns = [
+                                { seq: ['🟦', '🟥', '🟦', '🟥', '?'], answer: '🟦', wrong: ['🟥', '🟨'] },
+                                { seq: ['⭐', '⭐', '🌙', '⭐', '⭐', '?'], answer: '🌙', wrong: ['⭐', '☀️'] },
+                                { seq: ['🔺', '🔻', '🔺', '🔻', '🔺', '?'], answer: '🔻', wrong: ['🔺', '⬜'] },
+                                { seq: ['1', '2', '1', '2', '1', '?'], answer: '2', wrong: ['1', '3'] },
+                                { seq: ['🚀', '🛸', '🚀', '🛸', '?'], answer: '🚀', wrong: ['🛸', '✈️'] }
+                            ];
+                            const pattern = patterns[Math.floor(Math.random() * patterns.length)];
+                            question = `Pattern: ${pattern.seq.join(' ')}`;
+                            correctAnswer = pattern.answer;
+                            wrongAnswers = pattern.wrong;
+                            break;
+                            
+                        case 'comparison':
+                            const num1 = Math.floor(Math.random() * 90) + 10;
+                            const num2 = Math.floor(Math.random() * 90) + 10;
+                            if (num1 === num2) {
+                                question = `Which is bigger? ${num1} or ${num2 + 1}`;
+                                correctAnswer = num2 + 1;
+                                wrongAnswers = [num1, 'Same'];
+                            } else {
+                                question = `Which is bigger? ${num1} or ${num2}`;
+                                correctAnswer = Math.max(num1, num2);
+                                wrongAnswers = [Math.min(num1, num2), 'Same'];
+                            }
+                            break;
+                            
+                        default:
+                            question = '1 + 1 = ?';
+                            correctAnswer = 2;
+                            wrongAnswers = [1, 3];
+                    }
+                    
+                    const allAnswers = [correctAnswer, ...wrongAnswers];
+                    const shuffled = allAnswers.sort(() => Math.random() - 0.5);
+                    
+                    questionSet.push({
+                        question,
+                        options: shuffled.slice(0, 3),
+                        correctAnswer,
+                        id: Math.random()
+                    });
+                }
+                
+                return questionSet;
+            };
 
-#rocket {
-  font-size: 40px;
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  transition: transform 2s linear;
-}
+            useEffect(() => {
+                if (gameState === 'playing' && currentLevel < levels.length) {
+                    const newQuestions = generateQuestions(levels[currentLevel].type, 10);
+                    setQuestions(newQuestions);
+                    setCurrentQuestion(0);
+                }
+            }, [currentLevel, gameState]);
 
-#planet {
-  font-size: 60px;
-  position: absolute;
-  bottom: 40px;
-  right: 10px;
-}
+            const speakQuestion = () => {
+                if ('speechSynthesis' in window && questions[currentQuestion]) {
+                    const utterance = new SpeechSynthesisUtterance(questions[currentQuestion].question.replace('?', ''));
+                    utterance.rate = 0.8;
+                    utterance.pitch = 1.2;
+                    window.speechSynthesis.speak(utterance);
+                }
+            };
 
-.hidden {
-  display: none;
-}
+            const handleAnswer = (answer) => {
+                if (showFeedback) return;
+                
+                setSelectedAnswer(answer);
+                const correct = answer === questions[currentQuestion].correctAnswer;
+                setIsCorrect(correct);
+                setShowFeedback(true);
+                
+                if (correct) {
+                    setScore(score + (levels[currentLevel].difficulty * 10));
+                    setShowStars(true);
+                    setTimeout(() => setShowStars(false), 1000);
+                } else {
+                    setLives(lives - 1);
+                }
+                
+                setTimeout(() => {
+                    if (!correct && lives <= 1) {
+                        setGameState('gameOver');
+                    } else if (currentQuestion >= 9) {
+                        // Add level bonus to score
+                        setScore(prevScore => prevScore + levels[currentLevel].difficulty * 100);
+                        setGameState('levelComplete');
+                        setRocketPosition(rocketPosition + 1);
+                    } else {
+                        setCurrentQuestion(currentQuestion + 1);
+                        setShowFeedback(false);
+                        setSelectedAnswer(null);
+                    }
+                }, 2000);
+            };
 
-#options button {
-  margin: 5px;
-  padding: 10px 20px;
-  font-size: 18px;
-}
+            const startGame = () => {
+                setGameState('playing');
+                setCurrentLevel(0);
+                setCurrentQuestion(0);
+                setLives(3);
+                setScore(0);
+                setRocketPosition(0);
+                setSelectedAnswer(null);
+                setShowFeedback(false);
+                setIsCorrect(false);
+                setShowStars(false);
+            };
 
-.correct-animation {
-  animation: pulse 0.5s ease;
-}
+            const nextLevel = () => {
+                if (currentLevel < levels.length - 1) {
+                    setCurrentLevel(currentLevel + 1);
+                    setGameState('playing');
+                    setLives(3);
+                    setCurrentQuestion(0);
+                    setSelectedAnswer(null);
+                    setShowFeedback(false);
+                    setIsCorrect(false);
+                    setShowStars(false);
+                } else {
+                    setGameState('menu');
+                }
+            };
 
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.3); }
-  100% { transform: scale(1); }
-}
+            if (gameState === 'menu') {
+                return (
+                    <div className="min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-black flex items-center justify-center p-4">
+                        <div className="bg-blue-800 bg-opacity-90 rounded-3xl p-8 max-w-md w-full text-center animate-pulse">
+                            <h1 className="text-5xl font-bold text-yellow-300 mb-4">Space Math Adventure</h1>
+                            <div className="text-6xl mb-6">🚀</div>
+                            <p className="text-white text-xl mb-8">Journey through space while learning math!</p>
+                            <button
+                                onClick={startGame}
+                                className="bg-green-500 hover:bg-green-600 text-white text-2xl font-bold py-4 px-8 rounded-full transform hover:scale-110 transition-all duration-200 shadow-lg"
+                            >
+                                Start Mission
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
 
-.level-complete {
-  animation: fly 3s linear;
-}
+            if (gameState === 'gameOver') {
+                return (
+                    <div className="min-h-screen bg-gradient-to-b from-red-900 via-purple-900 to-black flex items-center justify-center p-4">
+                        <div className="bg-red-800 bg-opacity-90 rounded-3xl p-8 max-w-md w-full text-center">
+                            <h2 className="text-4xl font-bold text-white mb-4">Mission Failed!</h2>
+                            <div className="text-6xl mb-6">💥</div>
+                            <p className="text-white text-xl mb-4">Your rocket needs repairs!</p>
+                            <p className="text-yellow-300 text-2xl mb-8">Final Score: {score}</p>
+                            <button
+                                onClick={startGame}
+                                className="bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold py-3 px-6 rounded-full transform hover:scale-110 transition-all duration-200"
+                            >
+                                Try Again
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
 
-@keyframes fly {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(100vw); }
-}
+            if (gameState === 'levelComplete') {
+                return (
+                    <div className="min-h-screen bg-gradient-to-b from-green-900 via-blue-900 to-black flex items-center justify-center p-4">
+                        <div className="bg-green-800 bg-opacity-90 rounded-3xl p-8 max-w-md w-full text-center animate-bounce">
+                            <h2 className="text-4xl font-bold text-yellow-300 mb-4">Level Complete!</h2>
+                            <div className="text-6xl mb-6">{levels[currentLevel].planet}</div>
+                            <p className="text-white text-xl mb-2">You reached {levels[currentLevel].name}!</p>
+                            <div className="flex justify-center items-center gap-2 mb-6">
+                                <Award />
+                                <span className="text-yellow-300 text-2xl font-bold">+{levels[currentLevel].difficulty * 100} bonus!</span>
+                            </div>
+                            <p className="text-white text-2xl mb-8">Total Score: {score}</p>
+                            <button
+                                onClick={nextLevel}
+                                className="bg-purple-500 hover:bg-purple-600 text-white text-xl font-bold py-3 px-6 rounded-full transform hover:scale-110 transition-all duration-200"
+                            >
+                                {currentLevel < levels.length - 1 ? 'Next Planet' : 'Complete Mission'}
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-black p-4">
+                    <div className="max-w-4xl mx-auto mb-6">
+                        <div className="flex justify-between items-center bg-blue-800 bg-opacity-80 rounded-2xl p-4">
+                            <div className="flex items-center gap-4">
+                                <div className="text-3xl">{levels[currentLevel].planet}</div>
+                                <div>
+                                    <h3 className="text-white font-bold">{levels[currentLevel].name}</h3>
+                                    <p className="text-yellow-300">Level {currentLevel + 1}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-6">
+                                <div className="flex items-center gap-2">
+                                    <Star />
+                                    <span className="text-white text-xl font-bold">{score}</span>
+                                </div>
+                                <div className="flex gap-1">
+                                    {[...Array(3)].map((_, i) => (
+                                        <Heart key={i} filled={i < lives} />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="max-w-4xl mx-auto mb-8">
+                        <div className="bg-gray-700 rounded-full h-4 overflow-hidden">
+                            <div
+                                className="bg-gradient-to-r from-green-400 to-blue-500 h-full transition-all duration-500"
+                                style={{ width: `${(currentQuestion / 10) * 100}%` }}
+                            />
+                        </div>
+                        <p className="text-white text-center mt-2">Question {currentQuestion + 1} of 10</p>
+                    </div>
+
+                    {questions[currentQuestion] && (
+                        <div className="max-w-2xl mx-auto">
+                            <div className="bg-white bg-opacity-95 rounded-3xl p-8 mb-6 relative overflow-hidden">
+                                {showStars && (
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                        <Sparkles />
+                                    </div>
+                                )}
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-3xl font-bold text-gray-800">
+                                        {questions[currentQuestion].question}
+                                    </h2>
+                                    <button
+                                        onClick={speakQuestion}
+                                        className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-full transition-all duration-200"
+                                    >
+                                        <Volume2 />
+                                    </button>
+                                </div>
+                                
+                                <div className="grid grid-cols-3 gap-4">
+                                    {questions[currentQuestion].options.map((option, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => handleAnswer(option)}
+                                            disabled={showFeedback}
+                                            className={`
+                                                py-6 px-4 rounded-2xl text-2xl font-bold transition-all duration-200 transform
+                                                ${showFeedback && option === questions[currentQuestion].correctAnswer
+                                                    ? 'bg-green-500 text-white scale-110 animate-bounce'
+                                                    : showFeedback && option === selectedAnswer && !isCorrect
+                                                    ? 'bg-red-500 text-white animate-pulse'
+                                                    : showFeedback
+                                                    ? 'bg-gray-300 text-gray-500'
+                                                    : 'bg-blue-500 hover:bg-blue-600 text-white hover:scale-105'
+                                                }
+                                            `}
+                                        >
+                                            {option}
+                                        </button>
+                                    ))}
+                                </div>
+                                
+                                {showFeedback && (
+                                    <div className={`mt-6 text-center text-2xl font-bold ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                                        {isCorrect ? '🌟 Correct! Great job! 🌟' : '❌ Try again next time!'}
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div className="relative h-20">
+                                <div
+                                    className="absolute bottom-0 text-5xl transform transition-all duration-1000"
+                                    style={{ left: `${(currentQuestion / 10) * 100}%` }}
+                                >
+                                    <div className={`${showFeedback && isCorrect ? 'animate-bounce' : ''}`}>
+                                        🚀
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        ReactDOM.render(<SpaceMathGame />, document.getElementById('root'));
+    </script>
+</body>
+</html>
