@@ -91,6 +91,26 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
         
+        // NOTE: To enable saving player data between sessions when using this game
+        // outside of Claude, uncomment the localStorage code below:
+        
+        // Load saved data on startup
+        const loadPlayerData = () => {
+            const savedName = localStorage.getItem('spaceMathPlayerName');
+            const savedHighScore = localStorage.getItem('spaceMathHighScore');
+            return {
+                name: savedName || '',
+                highScore: parseInt(savedHighScore) || 0
+            };
+        };
+        
+        // Save player data
+        const savePlayerData = (name, highScore) => {
+            localStorage.setItem('spaceMathPlayerName', name);
+            localStorage.setItem('spaceMathHighScore', highScore);
+        };
+        
+        
         // Icons as simple SVG components
         const Rocket = () => (
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -135,6 +155,8 @@
 
         const SpaceMathGame = () => {
             const [gameState, setGameState] = useState('menu');
+            const [playerName, setPlayerName] = useState('');
+            const [highScore, setHighScore] = useState(0);
             const [currentLevel, setCurrentLevel] = useState(0);
             const [currentQuestion, setCurrentQuestion] = useState(0);
             const [lives, setLives] = useState(3);
@@ -453,6 +475,10 @@
                 
                 setTimeout(() => {
                     if (!correct && lives <= 1) {
+                        // Check high score even on game over
+                        if (score > highScore) {
+                            setHighScore(score);
+                        }
                         setGameState('gameOver');
                     } else if (currentQuestion >= 9) {
                         // Add level bonus to score
@@ -468,7 +494,11 @@
             };
 
             const startGame = () => {
-                setGameState('levelSelect');
+                if (playerName) {
+                    setGameState('levelSelect');
+                } else {
+                    setGameState('nameEntry');
+                }
                 setScore(0);
                 
                 // Initialize audio on game start (helps with mobile browsers)
@@ -526,6 +556,10 @@
                     setIsCorrect(false);
                     setShowStars(false);
                 } else {
+                    // Check if new high score
+                    if (score > highScore) {
+                        setHighScore(score);
+                    }
                     setGameState('victory');
                     playVictorySound();
                 }
@@ -538,14 +572,76 @@
                             <h1 className="text-5xl font-bold text-yellow-300 mb-4">Space Math Adventure</h1>
                             <div className="text-6xl mb-6">🚀</div>
                             <p className="text-white text-xl mb-8">Journey through space while learning math!</p>
+                            {playerName && (
+                                <div className="mb-6">
+                                    <p className="text-white text-lg">Welcome back, <span className="text-yellow-300 font-bold">{playerName}!</span></p>
+                                    <p className="text-white">High Score: <span className="text-yellow-300 font-bold">{highScore}</span></p>
+                                </div>
+                            )}
                             <button
                                 onClick={startGame}
                                 className="bg-green-500 hover:bg-green-600 text-white text-2xl font-bold py-4 px-8 rounded-full transform hover:scale-110 transition-all duration-200 shadow-lg"
                             >
                                 Start Mission
                             </button>
+                            {playerName && (
+                                <button
+                                    onClick={() => {
+                                        setPlayerName('');
+                                        setHighScore(0);
+                                    }}
+                                    className="mt-4 block mx-auto text-gray-400 hover:text-white text-sm underline"
+                                >
+                                    Change Player
+                                </button>
+                            )}
                             <p className="text-gray-300 text-sm mt-4">🔊 Tap speaker icon to hear questions</p>
                             <p className="text-gray-400 text-xs mt-2">Sound works best with volume turned up!</p>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (gameState === 'nameEntry') {
+                return (
+                    <div className="min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-black flex items-center justify-center p-4">
+                        <div className="bg-blue-800 bg-opacity-90 rounded-3xl p-8 max-w-md w-full text-center">
+                            <h2 className="text-4xl font-bold text-yellow-300 mb-4">Who's Playing?</h2>
+                            <div className="text-6xl mb-6">👨‍🚀</div>
+                            <input
+                                type="text"
+                                placeholder="Enter your name"
+                                value={playerName}
+                                onChange={(e) => setPlayerName(e.target.value.slice(0, 20))}
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter' && playerName.trim()) {
+                                        setGameState('levelSelect');
+                                    }
+                                }}
+                                className="w-full px-4 py-3 text-2xl text-center bg-white bg-opacity-20 text-white placeholder-gray-300 rounded-2xl mb-6 focus:outline-none focus:ring-4 focus:ring-yellow-400"
+                                autoFocus
+                            />
+                            <button
+                                onClick={() => {
+                                    if (playerName.trim()) {
+                                        setGameState('levelSelect');
+                                    }
+                                }}
+                                disabled={!playerName.trim()}
+                                className={`text-white text-xl font-bold py-3 px-8 rounded-full transform transition-all duration-200 ${
+                                    playerName.trim() 
+                                        ? 'bg-green-500 hover:bg-green-600 hover:scale-110' 
+                                        : 'bg-gray-600 cursor-not-allowed'
+                                }`}
+                            >
+                                Start Adventure
+                            </button>
+                            <button
+                                onClick={() => setGameState('menu')}
+                                className="mt-4 block mx-auto text-gray-400 hover:text-white text-sm underline"
+                            >
+                                Back
+                            </button>
                         </div>
                     </div>
                 );
@@ -555,7 +651,10 @@
                 return (
                     <div className="min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-black p-4">
                         <div className="max-w-4xl mx-auto">
-                            <h1 className="text-4xl font-bold text-yellow-300 text-center mb-8">Choose Your Destination</h1>
+                            <div className="text-center mb-6">
+                                <h1 className="text-4xl font-bold text-yellow-300 mb-2">Choose Your Destination</h1>
+                                <p className="text-white text-lg">Player: <span className="text-yellow-300">{playerName}</span> | High Score: <span className="text-yellow-300">{highScore}</span></p>
+                            </div>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                 {levels.map((level, index) => (
                                     <button
@@ -604,8 +703,11 @@
                         <div className="bg-red-800 bg-opacity-90 rounded-3xl p-8 max-w-md w-full text-center">
                             <h2 className="text-4xl font-bold text-white mb-4">Mission Failed!</h2>
                             <div className="text-6xl mb-6">💥</div>
-                            <p className="text-white text-xl mb-4">Your rocket needs repairs!</p>
-                            <p className="text-yellow-300 text-2xl mb-8">Final Score: {score}</p>
+                            <p className="text-white text-xl mb-4">Keep trying, {playerName}!</p>
+                            <p className="text-yellow-300 text-2xl mb-2">Final Score: {score}</p>
+                            {score === highScore && score > 0 && (
+                                <p className="text-yellow-300 text-lg mb-6">New High Score!</p>
+                            )}
                             <div className="flex flex-col gap-3">
                                 <button
                                     onClick={() => startLevel(currentLevel)}
@@ -655,12 +757,15 @@
                                 <span className="text-8xl animate-bounce" style={{animationDelay: '0.2s'}}>🚀</span>
                                 <span className="text-8xl animate-bounce" style={{animationDelay: '0.4s'}}>🌟</span>
                             </div>
-                            <p className="text-white text-2xl mb-4">You've mastered space math!</p>
+                            <p className="text-white text-2xl mb-4">Amazing job, {playerName}!</p>
                             <p className="text-yellow-200 text-xl italic mb-4">"Houston, we have a math champion!"</p>
                             
                             <div className="bg-white bg-opacity-20 rounded-2xl p-6 mb-6">
                                 <p className="text-4xl font-bold text-yellow-100 mb-2">FINAL SCORE</p>
                                 <p className="text-7xl font-bold animate-rainbow">{score}</p>
+                                {score === highScore && (
+                                    <p className="text-2xl text-yellow-300 font-bold mt-4 animate-pulse">🎉 NEW HIGH SCORE! 🎉</p>
+                                )}
                                 <div className="flex justify-center gap-1 mt-4">
                                     {[...Array(5)].map((_, i) => (
                                         <span key={i} className="text-4xl animate-spin" style={{animationDelay: `${i * 0.2}s`}}>⭐</span>
@@ -746,9 +851,12 @@
                                 </div>
                             </div>
                             <div className="flex items-center gap-6">
-                                <div className="flex items-center gap-2">
-                                    <Star />
-                                    <span className="text-white text-xl font-bold">{score}</span>
+                                <div className="text-right">
+                                    <p className="text-gray-300 text-sm">{playerName}</p>
+                                    <div className="flex items-center gap-2">
+                                        <Star />
+                                        <span className="text-white text-xl font-bold">{score}</span>
+                                    </div>
                                 </div>
                                 <div className="flex gap-1">
                                     {[...Array(3)].map((_, i) => (
@@ -837,5 +945,10 @@
 
         ReactDOM.render(<SpaceMathGame />, document.getElementById('root'));
     </script>
+    <!-- 
+    NOTE: Player data (name and high score) is only saved during the current session.
+    To enable saving between sessions when hosting this game on your own server,
+    uncomment the localStorage code at the beginning of the script section.
+    -->
 </body>
 </html>
