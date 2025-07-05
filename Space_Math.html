@@ -294,12 +294,16 @@
             };
 
             const startGame = () => {
+                setGameState('levelSelect');
+                setScore(0);
+            };
+
+            const startLevel = (levelIndex) => {
                 setGameState('playing');
-                setCurrentLevel(0);
+                setCurrentLevel(levelIndex);
                 setCurrentQuestion(0);
                 setLives(3);
-                setScore(0);
-                setRocketPosition(0);
+                setRocketPosition(levelIndex);
                 setSelectedAnswer(null);
                 setShowFeedback(false);
                 setIsCorrect(false);
@@ -339,6 +343,52 @@
                 );
             }
 
+            if (gameState === 'levelSelect') {
+                return (
+                    <div className="min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-black p-4">
+                        <div className="max-w-4xl mx-auto">
+                            <h1 className="text-4xl font-bold text-yellow-300 text-center mb-8">Choose Your Destination</h1>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                {levels.map((level, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => startLevel(index)}
+                                        className="bg-blue-800 bg-opacity-90 hover:bg-blue-700 rounded-2xl p-4 transform hover:scale-105 transition-all duration-200"
+                                    >
+                                        <div className="text-4xl mb-2">{level.planet}</div>
+                                        <h3 className="text-white font-bold text-lg">{level.name}</h3>
+                                        <p className="text-yellow-300 text-sm">Level {index + 1}</p>
+                                        <p className="text-gray-300 text-xs mt-1">
+                                            {level.type === 'addition-basic' && 'Basic Addition'}
+                                            {level.type === 'addition-advanced' && 'Advanced Addition'}
+                                            {level.type === 'subtraction-basic' && 'Subtraction'}
+                                            {level.type === 'multiplication-easy' && 'Times 2 & 3'}
+                                            {level.type === 'multiplication-hard' && 'Times Tables'}
+                                            {level.type === 'counting-ones' && 'Count by 1s'}
+                                            {level.type === 'counting-fives' && 'Count by 5s'}
+                                            {level.type === 'counting-tens' && 'Count by 10s'}
+                                            {level.type === 'patterns' && 'Patterns'}
+                                            {level.type === 'comparison' && 'Greater/Less Than'}
+                                        </p>
+                                        <div className="flex justify-center mt-2">
+                                            {[...Array(level.difficulty)].map((_, i) => (
+                                                <span key={i} className="text-yellow-400 text-xs">⭐</span>
+                                            ))}
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                            <button
+                                onClick={() => setGameState('menu')}
+                                className="mt-8 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-full mx-auto block"
+                            >
+                                Back to Menu
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
             if (gameState === 'gameOver') {
                 return (
                     <div className="min-h-screen bg-gradient-to-b from-red-900 via-purple-900 to-black flex items-center justify-center p-4">
@@ -347,12 +397,20 @@
                             <div className="text-6xl mb-6">💥</div>
                             <p className="text-white text-xl mb-4">Your rocket needs repairs!</p>
                             <p className="text-yellow-300 text-2xl mb-8">Final Score: {score}</p>
-                            <button
-                                onClick={startGame}
-                                className="bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold py-3 px-6 rounded-full transform hover:scale-110 transition-all duration-200"
-                            >
-                                Try Again
-                            </button>
+                            <div className="flex flex-col gap-3">
+                                <button
+                                    onClick={() => startLevel(currentLevel)}
+                                    className="bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold py-3 px-6 rounded-full transform hover:scale-110 transition-all duration-200"
+                                >
+                                    Try Again
+                                </button>
+                                <button
+                                    onClick={() => setGameState('levelSelect')}
+                                    className="bg-purple-500 hover:bg-purple-600 text-white text-lg font-bold py-2 px-4 rounded-full transform hover:scale-105 transition-all duration-200"
+                                >
+                                    Choose Different Level
+                                </button>
+                            </div>
                         </div>
                     </div>
                 );
@@ -370,12 +428,20 @@
                                 <span className="text-yellow-300 text-2xl font-bold">+{levels[currentLevel].difficulty * 100} bonus!</span>
                             </div>
                             <p className="text-white text-2xl mb-8">Total Score: {score}</p>
-                            <button
-                                onClick={nextLevel}
-                                className="bg-purple-500 hover:bg-purple-600 text-white text-xl font-bold py-3 px-6 rounded-full transform hover:scale-110 transition-all duration-200"
-                            >
-                                {currentLevel < levels.length - 1 ? 'Next Planet' : 'Complete Mission'}
-                            </button>
+                            <div className="flex flex-col gap-3">
+                                <button
+                                    onClick={nextLevel}
+                                    className="bg-purple-500 hover:bg-purple-600 text-white text-xl font-bold py-3 px-6 rounded-full transform hover:scale-110 transition-all duration-200"
+                                >
+                                    {currentLevel < levels.length - 1 ? 'Next Planet' : 'Complete Mission'}
+                                </button>
+                                <button
+                                    onClick={() => setGameState('levelSelect')}
+                                    className="bg-blue-500 hover:bg-blue-600 text-white text-lg font-bold py-2 px-4 rounded-full transform hover:scale-105 transition-all duration-200"
+                                >
+                                    Choose Different Level
+                                </button>
+                            </div>
                         </div>
                     </div>
                 );
@@ -386,6 +452,13 @@
                     <div className="max-w-4xl mx-auto mb-6">
                         <div className="flex justify-between items-center bg-blue-800 bg-opacity-80 rounded-2xl p-4">
                             <div className="flex items-center gap-4">
+                                <button
+                                    onClick={() => setGameState('levelSelect')}
+                                    className="bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-lg transition-all duration-200"
+                                    title="Back to Level Select"
+                                >
+                                    ← Levels
+                                </button>
                                 <div className="text-3xl">{levels[currentLevel].planet}</div>
                                 <div>
                                     <h3 className="text-white font-bold">{levels[currentLevel].name}</h3>
