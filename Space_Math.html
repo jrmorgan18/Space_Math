@@ -157,6 +157,7 @@
             const [gameState, setGameState] = useState('menu');
             const [playerName, setPlayerName] = useState('');
             const [highScore, setHighScore] = useState(0);
+            const [totalPoints, setTotalPoints] = useState(0);
             const [currentLevel, setCurrentLevel] = useState(0);
             const [currentQuestion, setCurrentQuestion] = useState(0);
             const [lives, setLives] = useState(3);
@@ -479,6 +480,7 @@
                         if (score > highScore) {
                             setHighScore(score);
                         }
+                        setTotalPoints(prev => prev + score);
                         setGameState('gameOver');
                     } else if (currentQuestion >= 9) {
                         // Add level bonus to score
@@ -560,6 +562,7 @@
                     if (score > highScore) {
                         setHighScore(score);
                     }
+                    setTotalPoints(prev => prev + score);
                     setGameState('victory');
                     playVictorySound();
                 }
@@ -576,6 +579,7 @@
                                 <div className="mb-6">
                                     <p className="text-white text-lg">Welcome back, <span className="text-yellow-300 font-bold">{playerName}!</span></p>
                                     <p className="text-white">High Score: <span className="text-yellow-300 font-bold">{highScore}</span></p>
+                                    <p className="text-white">Total Points: <span className="text-yellow-300 font-bold">{totalPoints}</span></p>
                                 </div>
                             )}
                             <button
@@ -589,6 +593,7 @@
                                     onClick={() => {
                                         setPlayerName('');
                                         setHighScore(0);
+                                        setTotalPoints(0);
                                     }}
                                     className="mt-4 block mx-auto text-gray-400 hover:text-white text-sm underline"
                                 >
@@ -653,7 +658,7 @@
                         <div className="max-w-4xl mx-auto">
                             <div className="text-center mb-6">
                                 <h1 className="text-4xl font-bold text-yellow-300 mb-2">Choose Your Destination</h1>
-                                <p className="text-white text-lg">Player: <span className="text-yellow-300">{playerName}</span> | High Score: <span className="text-yellow-300">{highScore}</span></p>
+                                <p className="text-white text-lg">Player: <span className="text-yellow-300">{playerName}</span> | High Score: <span className="text-yellow-300">{highScore}</span> | Total Points: <span className="text-yellow-300">{totalPoints}</span></p>
                             </div>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                 {levels.map((level, index) => (
@@ -705,6 +710,7 @@
                             <div className="text-6xl mb-6">💥</div>
                             <p className="text-white text-xl mb-4">Keep trying, {playerName}!</p>
                             <p className="text-yellow-300 text-2xl mb-2">Final Score: {score}</p>
+                            <p className="text-yellow-300 mb-4">Total Points: {totalPoints}</p>
                             {score === highScore && score > 0 && (
                                 <p className="text-yellow-300 text-lg mb-6">New High Score!</p>
                             )}
@@ -763,6 +769,7 @@
                             <div className="bg-white bg-opacity-20 rounded-2xl p-6 mb-6">
                                 <p className="text-4xl font-bold text-yellow-100 mb-2">FINAL SCORE</p>
                                 <p className="text-7xl font-bold animate-rainbow">{score}</p>
+                                <p className="text-yellow-200 mt-2">Total Points: {totalPoints}</p>
                                 {score === highScore && (
                                     <p className="text-2xl text-yellow-300 font-bold mt-4 animate-pulse">🎉 NEW HIGH SCORE! 🎉</p>
                                 )}
@@ -812,7 +819,8 @@
                                 <Award />
                                 <span className="text-yellow-300 text-2xl font-bold">+{levels[currentLevel].difficulty * 100} bonus!</span>
                             </div>
-                            <p className="text-white text-2xl mb-8">Total Score: {score}</p>
+                            <p className="text-white text-2xl mb-2">Total Score: {score}</p>
+                            <p className="text-yellow-300 mb-6">Total Points: {totalPoints}</p>
                             <div className="flex flex-col gap-3">
                                 <button
                                     onClick={nextLevel}
@@ -857,6 +865,7 @@
                                         <Star />
                                         <span className="text-white text-xl font-bold">{score}</span>
                                     </div>
+                                    <p className="text-yellow-300 text-sm">Total: {totalPoints}</p>
                                 </div>
                                 <div className="flex gap-1">
                                     {[...Array(3)].map((_, i) => (
