@@ -98,16 +98,19 @@
         const loadPlayerData = () => {
             const savedName = localStorage.getItem('spaceMathPlayerName');
             const savedHighScore = localStorage.getItem('spaceMathHighScore');
+            const savedTotal = localStorage.getItem('spaceMathTotalPoints');
             return {
                 name: savedName || '',
-                highScore: parseInt(savedHighScore) || 0
+                highScore: parseInt(savedHighScore) || 0,
+                totalPoints: parseInt(savedTotal) || 0
             };
         };
         
         // Save player data
-        const savePlayerData = (name, highScore) => {
+        const savePlayerData = (name, highScore, totalPoints) => {
             localStorage.setItem('spaceMathPlayerName', name);
             localStorage.setItem('spaceMathHighScore', highScore);
+            localStorage.setItem('spaceMathTotalPoints', totalPoints);
         };
         
         
@@ -169,6 +172,23 @@
             const [rocketPosition, setRocketPosition] = useState(0);
             const [showStars, setShowStars] = useState(false);
             const [audioContext, setAudioContext] = useState(null);
+
+            // Load any saved player data on mount
+            useEffect(() => {
+                const data = loadPlayerData();
+                setPlayerName(data.name);
+                setHighScore(data.highScore);
+                if (data.totalPoints !== undefined) {
+                    setTotalPoints(data.totalPoints);
+                }
+            }, []);
+
+            // Persist player data whenever it changes
+            useEffect(() => {
+                if (playerName) {
+                    savePlayerData(playerName, highScore, totalPoints);
+                }
+            }, [playerName, highScore, totalPoints]);
 
             // Initialize audio context on first user interaction
             useEffect(() => {
@@ -955,7 +975,7 @@
         ReactDOM.render(<SpaceMathGame />, document.getElementById('root'));
     </script>
     <!-- 
-    NOTE: Player data (name and high score) is only saved during the current session.
+    NOTE: Player data (name, high score and total points) is only saved during the current session.
     To enable saving between sessions when hosting this game on your own server,
     uncomment the localStorage code at the beginning of the script section.
     -->
