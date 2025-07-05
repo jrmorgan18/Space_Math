@@ -17,101 +17,938 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* … existing keyframes & classes … */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(-25%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
+            50% { transform: translateY(0); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+        }
+        .animate-bounce { animation: bounce 1s infinite; }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin { animation: spin 1s linear infinite; }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-20px) rotate(-5deg); }
+            66% { transform: translateY(-10px) rotate(5deg); }
+        }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #f0f;
+            animation: confetti-fall 3s linear infinite;
+        }
+        .confetti:nth-child(1) { left: 10%; animation-delay: 0s; background: #ff0; }
+        .confetti:nth-child(2) { left: 20%; animation-delay: 0.3s; background: #0ff; }
+        .confetti:nth-child(3) { left: 30%; animation-delay: 0.6s; background: #f0f; }
+        .confetti:nth-child(4) { left: 40%; animation-delay: 0.9s; background: #0f0; }
+        .confetti:nth-child(5) { left: 50%; animation-delay: 1.2s; background: #ff0; }
+        .confetti:nth-child(6) { left: 60%; animation-delay: 1.5s; background: #f00; }
+        .confetti:nth-child(7) { left: 70%; animation-delay: 1.8s; background: #0ff; }
+        .confetti:nth-child(8) { left: 80%; animation-delay: 2.1s; background: #f0f; }
+        .confetti:nth-child(9) { left: 90%; animation-delay: 2.4s; background: #0f0; }
+        .confetti:nth-child(10) { left: 95%; animation-delay: 2.7s; background: #ff0; }
+        
+        @keyframes zoom-in {
+            0% { transform: scale(0) rotate(180deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        @keyframes dance {
+            0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+            25% { transform: translateY(-20px) rotate(-10deg) scale(1.1); }
+            50% { transform: translateY(0px) rotate(0deg) scale(1); }
+            75% { transform: translateY(-20px) rotate(10deg) scale(1.1); }
+        }
+        .animate-dance { animation: dance 1s ease-in-out infinite; }
+        
+        @keyframes dance-alt {
+            0%, 100% { transform: translateX(0px) rotate(0deg); }
+            25% { transform: translateX(-10px) rotate(-15deg); }
+            50% { transform: translateX(0px) rotate(0deg); }
+            75% { transform: translateX(10px) rotate(15deg); }
+        }
+        .animate-dance-alt { animation: dance-alt 0.8s ease-in-out infinite; }
     </style>
 </head>
 <body>
     <div id="root"></div>
+    
     <script type="text/babel">
         const { useState, useEffect } = React;
-
-        // Optional: persist data across sessions – uncomment localStorage bits below when self‑hosting
+        
+        // NOTE: To enable saving player data between sessions when using this game
+        // outside of Claude, uncomment the localStorage code below:
+        
+        // Load saved data on startup
         const loadPlayerData = () => {
-            const savedName       = localStorage.getItem('spaceMathPlayerName');
-            const savedHighScore  = localStorage.getItem('spaceMathHighScore');
-            const savedTotal      = localStorage.getItem('spaceMathTotalPoints');
+            const savedName = localStorage.getItem('spaceMathPlayerName');
+            const savedHighScore = localStorage.getItem('spaceMathHighScore');
             return {
-                name:       savedName || '',
-                highScore:  parseInt(savedHighScore)  || 0,
-                totalPoints:parseInt(savedTotal)      || 0
+                name: savedName || '',
+                highScore: parseInt(savedHighScore) || 0
             };
         };
-        const savePlayerData = (name, high, total) => {
-            localStorage.setItem('spaceMathPlayerName',  name);
-            localStorage.setItem('spaceMathHighScore',   high);
-            localStorage.setItem('spaceMathTotalPoints', total);
+        
+        // Save player data
+        const savePlayerData = (name, highScore) => {
+            localStorage.setItem('spaceMathPlayerName', name);
+            localStorage.setItem('spaceMathHighScore', highScore);
         };
+        
+        
+        // Icons as simple SVG components
+        const Rocket = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 00-2.91-.09z"/>
+                <path d="M12 15l-3-3a22 22 0 012-3.95A12.88 12.88 0 0122 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 01-4 2z"/>
+                <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/>
+                <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>
+            </svg>
+        );
+        
+        const Star = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+        );
+        
+        const Heart = ({ filled }) => (
+            <svg width="28" height="28" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+            </svg>
+        );
+        
+        const Volume2 = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/>
+            </svg>
+        );
+        
+        const Award = () => (
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="8" r="7"/>
+                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+            </svg>
+        );
+        
+        const Sparkles = () => (
+            <svg width="100" height="100" viewBox="0 0 24 24" fill="currentColor" className="animate-spin">
+                <path d="M12 0l3.09 6.26L22 7.27l-5 4.87 1.18 6.88L12 15.77l-6.18 3.25L7 12.14 2 7.27l6.91-1.01L12 0z"/>
+            </svg>
+        );
 
         const SpaceMathGame = () => {
             const [gameState, setGameState] = useState('menu');
+            const [playerName, setPlayerName] = useState('');
+            const [highScore, setHighScore] = useState(0);
+            const [currentLevel, setCurrentLevel] = useState(0);
+            const [currentQuestion, setCurrentQuestion] = useState(0);
+            const [lives, setLives] = useState(3);
+            const [score, setScore] = useState(0);
+            const [selectedAnswer, setSelectedAnswer] = useState(null);
+            const [showFeedback, setShowFeedback] = useState(false);
+            const [isCorrect, setIsCorrect] = useState(false);
+            const [questions, setQuestions] = useState([]);
+            const [rocketPosition, setRocketPosition] = useState(0);
+            const [showStars, setShowStars] = useState(false);
+            const [audioContext, setAudioContext] = useState(null);
 
-            // pull any stored values (comment‑out loadPlayerData() if you don't want persistence)
-            const initialData = loadPlayerData();
-            const [playerName, setPlayerName]   = useState(initialData.name);
-            const [highScore,  setHighScore]    = useState(initialData.highScore);
-            const [totalPoints,setTotalPoints]  = useState(initialData.totalPoints);
-
-            /* … all the existing state hooks remain unchanged … */
-
-            /* --------------------------------------------------
-               Whenever we potentially update name / scores, ALSO
-               call savePlayerData so the numbers survive reloads.
-            ---------------------------------------------------*/
+            // Initialize audio context on first user interaction
             useEffect(() => {
-                if (playerName) {
-                    savePlayerData(playerName, highScore, totalPoints);
-                }
-            }, [playerName, highScore, totalPoints]);
+                const initAudio = () => {
+                    if (!audioContext) {
+                        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                        setAudioContext(ctx);
+                    }
+                };
+                window.addEventListener('click', initAudio, { once: true });
+                return () => window.removeEventListener('click', initAudio);
+            }, [audioContext]);
 
-            /* ---------------- score bookkeeping ---------------*/
-            const registerFinalScore = (finalScore) => {
-                // high‑score check
-                if (finalScore > highScore) {
-                    setHighScore(finalScore);
-                }
-                // add to running total
-                if (finalScore > 0) {
-                    setTotalPoints(tp => tp + finalScore);
+            // Play sound effect
+            const playSound = (frequency, duration) => {
+                if (audioContext && audioContext.state === 'running') {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.value = frequency;
+                    oscillator.type = 'sine';
+                    
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+                    
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + duration);
                 }
             };
 
-            /* Replace previous scattered high‑score logic with a
-               single call to registerFinalScore() anywhere we end
-               a run (game over OR victory)                        */
+            // Play correct sound
+            const playCorrectSound = () => {
+                playSound(523, 0.1); // C5
+                setTimeout(() => playSound(659, 0.1), 100); // E5
+                setTimeout(() => playSound(784, 0.2), 200); // G5
+            };
 
-            /* Example – inside handleAnswer() when lives hit 0: */
-            // registerFinalScore(score);
+            // Play incorrect sound
+            const playIncorrectSound = () => {
+                playSound(200, 0.3); // Low tone
+            };
 
-            /* Example – inside victory branch after computing score: */
-            // registerFinalScore(score);
+            const levels = [
+                { name: 'Earth Orbit', type: 'addition-basic', planet: '🌍', difficulty: 1 },
+                { name: 'Moon Base', type: 'counting-ones', planet: '🌙', difficulty: 1 },
+                { name: 'Mars Colony', type: 'subtraction-basic', planet: '🔴', difficulty: 2 },
+                { name: 'Jupiter Station', type: 'counting-fives', planet: '🟠', difficulty: 2 },
+                { name: 'Saturn Rings', type: 'patterns', planet: '🪐', difficulty: 3 },
+                { name: 'Neptune Deep', type: 'counting-tens', planet: '🔵', difficulty: 3 },
+                { name: 'Asteroid Field', type: 'comparison', planet: '☄️', difficulty: 4 },
+                { name: 'Alpha Centauri', type: 'multiplication-easy', planet: '⭐', difficulty: 4 },
+                { name: 'Nebula Core', type: 'addition-advanced', planet: '🌌', difficulty: 5 },
+                { name: 'Andromeda', type: 'patterns-hard', planet: '🌀', difficulty: 5 },
+                { name: 'Galaxy Center', type: 'multiplication-hard', planet: '🌠', difficulty: 5 }
+            ];
 
-            /* You will need to swap the old direct highScore/ setHighScore
-               updates for this helper wherever they appear.         */
+            const generateQuestions = (type, count = 10) => {
+                const questionSet = [];
+                
+                for (let i = 0; i < count; i++) {
+                    let question, correctAnswer, wrongAnswers;
+                    
+                    switch (type) {
+                        case 'addition-basic':
+                            const a1 = Math.floor(Math.random() * 10);
+                            const b1 = Math.floor(Math.random() * 10);
+                            question = `${a1} + ${b1} = ?`;
+                            correctAnswer = a1 + b1;
+                            wrongAnswers = [correctAnswer + 1, correctAnswer - 1];
+                            if (wrongAnswers[1] < 0) wrongAnswers[1] = correctAnswer + 2;
+                            break;
+                            
+                        case 'addition-advanced':
+                            const a2 = Math.floor(Math.random() * 90) + 10;
+                            const b2 = Math.floor(Math.random() * 10);
+                            question = `${a2} + ${b2} = ?`;
+                            correctAnswer = a2 + b2;
+                            wrongAnswers = [correctAnswer + 5, correctAnswer - 3];
+                            break;
+                            
+                        case 'subtraction-basic':
+                            const a3 = Math.floor(Math.random() * 10) + 5;
+                            const b3 = Math.floor(Math.random() * Math.min(5, a3));
+                            question = `${a3} - ${b3} = ?`;
+                            correctAnswer = a3 - b3;
+                            wrongAnswers = [correctAnswer + 1, correctAnswer + 2];
+                            if (correctAnswer === 0) wrongAnswers = [1, 2];
+                            break;
+                            
+                        case 'multiplication-easy':
+                            const mult = Math.random() < 0.5 ? 2 : 3;
+                            const b4 = Math.floor(Math.random() * 10) + 1;
+                            question = `${mult} × ${b4} = ?`;
+                            correctAnswer = mult * b4;
+                            wrongAnswers = [correctAnswer + mult, correctAnswer - mult];
+                            if (wrongAnswers[1] <= 0) wrongAnswers[1] = correctAnswer + mult * 2;
+                            break;
+                            
+                        case 'multiplication-hard':
+                            const a5 = Math.floor(Math.random() * 9) + 2;
+                            const b5 = Math.floor(Math.random() * 10) + 1;
+                            question = `${a5} × ${b5} = ?`;
+                            correctAnswer = a5 * b5;
+                            wrongAnswers = [correctAnswer + a5, correctAnswer - a5];
+                            if (wrongAnswers[1] <= 0) wrongAnswers[1] = correctAnswer + a5 * 2;
+                            break;
+                            
+                        case 'counting-ones':
+                            const start1 = Math.floor(Math.random() * 90);
+                            const gap1 = Math.floor(Math.random() * 5) + 3;
+                            const sequence1 = [start1, start1 + 1, start1 + 2, '?', start1 + 4];
+                            question = `Count: ${sequence1.join(', ')}`;
+                            correctAnswer = start1 + 3;
+                            wrongAnswers = [correctAnswer + 1, correctAnswer - 1];
+                            break;
+                            
+                        case 'counting-fives':
+                            const start5 = Math.floor(Math.random() * 16) * 5;
+                            const pos = Math.floor(Math.random() * 3) + 1;
+                            const sequence5 = [];
+                            for (let j = 0; j < 5; j++) {
+                                sequence5.push(j === pos ? '?' : start5 + j * 5);
+                            }
+                            question = `Count by 5s: ${sequence5.join(', ')}`;
+                            correctAnswer = start5 + pos * 5;
+                            wrongAnswers = [correctAnswer + 5, correctAnswer - 5];
+                            if (wrongAnswers[1] < 0) wrongAnswers[1] = correctAnswer + 10;
+                            break;
+                            
+                        case 'counting-tens':
+                            const start10 = Math.floor(Math.random() * 16) * 10;
+                            const pos10 = Math.floor(Math.random() * 3) + 1;
+                            const sequence10 = [];
+                            for (let j = 0; j < 5; j++) {
+                                sequence10.push(j === pos10 ? '?' : start10 + j * 10);
+                            }
+                            question = `Count by 10s: ${sequence10.join(', ')}`;
+                            correctAnswer = start10 + pos10 * 10;
+                            wrongAnswers = [correctAnswer + 10, correctAnswer - 10];
+                            if (wrongAnswers[1] < 0) wrongAnswers[1] = correctAnswer + 20;
+                            break;
+                            
+                        case 'patterns':
+                            const patterns = [
+                                { seq: ['🟦', '🟥', '🟦', '🟥', '?'], answer: '🟦', wrong: ['🟥', '🟨'] },
+                                { seq: ['⭐', '⭐', '🌙', '⭐', '⭐', '?'], answer: '🌙', wrong: ['⭐', '☀️'] },
+                                { seq: ['🔺', '🔻', '🔺', '🔻', '🔺', '?'], answer: '🔻', wrong: ['🔺', '⬜'] },
+                                { seq: ['1', '2', '1', '2', '1', '?'], answer: '2', wrong: ['1', '3'] },
+                                { seq: ['🚀', '🛸', '🚀', '🛸', '?'], answer: '🚀', wrong: ['🛸', '✈️'] },
+                                { seq: ['A', 'B', 'A', 'B', 'A', '?'], answer: 'B', wrong: ['A', 'C'] },
+                                { seq: ['🟡', '🟡', '🔵', '🟡', '🟡', '?'], answer: '🔵', wrong: ['🟡', '🟢'] },
+                                { seq: ['3', '3', '5', '3', '3', '?'], answer: '5', wrong: ['3', '4'] },
+                                { seq: ['🎵', '🎶', '🎵', '🎶', '?'], answer: '🎵', wrong: ['🎶', '🎤'] },
+                                { seq: ['◆', '◇', '◆', '◇', '◆', '?'], answer: '◇', wrong: ['◆', '○'] },
+                                { seq: ['🍎', '🍌', '🍎', '🍌', '?'], answer: '🍎', wrong: ['🍌', '🍊'] },
+                                { seq: ['2', '4', '2', '4', '2', '?'], answer: '4', wrong: ['2', '6'] },
+                                { seq: ['♠', '♥', '♠', '♥', '?'], answer: '♠', wrong: ['♥', '♣'] },
+                                { seq: ['🌞', '🌛', '🌞', '🌛', '🌞', '?'], answer: '🌛', wrong: ['🌞', '⭐'] },
+                                { seq: ['X', 'O', 'X', 'O', 'X', '?'], answer: 'O', wrong: ['X', 'Y'] }
+                            ];
+                            const pattern = patterns[Math.floor(Math.random() * patterns.length)];
+                            question = `Pattern: ${pattern.seq.join(' ')}`;
+                            correctAnswer = pattern.answer;
+                            wrongAnswers = pattern.wrong;
+                            break;
+                            
+                        case 'patterns-hard':
+                            const hardPatterns = [
+                                { seq: ['1', '2', '3', '1', '2', '?'], answer: '3', wrong: ['1', '4'] },
+                                { seq: ['🟥', '🟨', '🟦', '🟥', '🟨', '?'], answer: '🟦', wrong: ['🟥', '🟩'] },
+                                { seq: ['A', 'B', 'C', 'A', 'B', '?'], answer: 'C', wrong: ['A', 'D'] },
+                                { seq: ['2', '4', '6', '2', '4', '?'], answer: '6', wrong: ['2', '8'] },
+                                { seq: ['🌟', '🌟', '🌙', '🌟', '🌟', '🌙', '?'], answer: '🌟', wrong: ['🌙', '☀️'] },
+                                { seq: ['5', '10', '5', '10', '5', '?'], answer: '10', wrong: ['5', '15'] },
+                                { seq: ['◯', '◯', '◼', '◯', '◯', '?'], answer: '◼', wrong: ['◯', '◆'] },
+                                { seq: ['M', 'T', 'W', 'M', 'T', '?'], answer: 'W', wrong: ['M', 'T'] },
+                                { seq: ['1', '1', '2', '1', '1', '2', '?'], answer: '1', wrong: ['2', '3'] },
+                                { seq: ['🔴', '🔵', '🟢', '🔴', '🔵', '?'], answer: '🟢', wrong: ['🔴', '🟡'] },
+                                { seq: ['3', '6', '9', '3', '6', '?'], answer: '9', wrong: ['3', '12'] },
+                                { seq: ['♪', '♫', '♪', '♪', '♫', '?'], answer: '♪', wrong: ['♫', '♬'] },
+                                { seq: ['10', '20', '10', '20', '10', '?'], answer: '20', wrong: ['10', '30'] },
+                                { seq: ['Z', 'Y', 'X', 'Z', 'Y', '?'], answer: 'X', wrong: ['Z', 'W'] },
+                                { seq: ['🚗', '🚗', '🚌', '🚗', '🚗', '🚌', '?'], answer: '🚗', wrong: ['🚌', '🚙'] }
+                            ];
+                            const hardPattern = hardPatterns[Math.floor(Math.random() * hardPatterns.length)];
+                            question = `Pattern: ${hardPattern.seq.join(' ')}`;
+                            correctAnswer = hardPattern.answer;
+                            wrongAnswers = hardPattern.wrong;
+                            break;
+                            
+                        case 'comparison':
+                            const num1 = Math.floor(Math.random() * 90) + 10;
+                            const num2 = Math.floor(Math.random() * 90) + 10;
+                            if (num1 === num2) {
+                                question = `Which is bigger? ${num1} or ${num2 + 1}`;
+                                correctAnswer = num2 + 1;
+                                wrongAnswers = [num1, 'Same'];
+                            } else {
+                                question = `Which is bigger? ${num1} or ${num2}`;
+                                correctAnswer = Math.max(num1, num2);
+                                wrongAnswers = [Math.min(num1, num2), 'Same'];
+                            }
+                            break;
+                            
+                        default:
+                            question = '1 + 1 = ?';
+                            correctAnswer = 2;
+                            wrongAnswers = [1, 3];
+                    }
+                    
+                    const allAnswers = [correctAnswer, ...wrongAnswers];
+                    const shuffled = allAnswers.sort(() => Math.random() - 0.5);
+                    
+                    questionSet.push({
+                        question,
+                        options: shuffled.slice(0, 3),
+                        correctAnswer,
+                        id: Math.random()
+                    });
+                }
+                
+                return questionSet;
+            };
 
-            /* --------------------------------------------------*/
+            useEffect(() => {
+                if (gameState === 'playing' && currentLevel < levels.length) {
+                    const newQuestions = generateQuestions(levels[currentLevel].type, 10);
+                    setQuestions(newQuestions);
+                    setCurrentQuestion(0);
+                }
+            }, [currentLevel, gameState]);
 
-            /* ---------- UI: display running total -------------*/
-            // 1. Menu screen – below High Score
-            //    <p className="text-white">Total Points: <span className="text-yellow-300 font-bold">{totalPoints}</span></p>
+            const speakQuestion = () => {
+                if (!('speechSynthesis' in window)) {
+                    alert('Sorry, your browser does not support text-to-speech!');
+                    return;
+                }
+                
+                // Cancel any ongoing speech
+                window.speechSynthesis.cancel();
+                
+                if (questions[currentQuestion]) {
+                    const text = questions[currentQuestion].question
+                        .replace('?', '')
+                        .replace('×', ' times ')
+                        .replace('Pattern:', 'What comes next in the pattern');
+                    
+                    // For Fire tablets and mobile browsers
+                    const speak = () => {
+                        const utterance = new SpeechSynthesisUtterance(text);
+                        utterance.rate = 0.8;
+                        utterance.pitch = 1.0;
+                        utterance.volume = 1.0;
+                        utterance.lang = 'en-US';
+                        
+                        // Try to use a specific voice if available
+                        const voices = window.speechSynthesis.getVoices();
+                        if (voices.length > 0) {
+                            // Prefer English voices
+                            const englishVoice = voices.find(voice => voice.lang.startsWith('en'));
+                            if (englishVoice) {
+                                utterance.voice = englishVoice;
+                            }
+                        }
+                        
+                        utterance.onerror = (event) => {
+                            console.error('Speech error:', event);
+                            alert('Question: ' + text);
+                        };
+                        
+                        window.speechSynthesis.speak(utterance);
+                    };
+                    
+                    // If voices aren't loaded yet, wait for them
+                    if (window.speechSynthesis.getVoices().length === 0) {
+                        window.speechSynthesis.onvoiceschanged = () => {
+                            speak();
+                        };
+                    } else {
+                        speak();
+                    }
+                }
+            };
 
-            // 2. Level‑select header (under High Score)
-            //    | High Score: X | Total: Y
+            const handleAnswer = (answer) => {
+                if (showFeedback) return;
+                
+                setSelectedAnswer(answer);
+                const correct = answer === questions[currentQuestion].correctAnswer;
+                setIsCorrect(correct);
+                setShowFeedback(true);
+                
+                if (correct) {
+                    setScore(score + (levels[currentLevel].difficulty * 10));
+                    setShowStars(true);
+                    playCorrectSound();
+                    setTimeout(() => setShowStars(false), 1000);
+                } else {
+                    setLives(lives - 1);
+                    playIncorrectSound();
+                }
+                
+                setTimeout(() => {
+                    if (!correct && lives <= 1) {
+                        // Check high score even on game over
+                        if (score > highScore) {
+                            setHighScore(score);
+                        }
+                        setGameState('gameOver');
+                    } else if (currentQuestion >= 9) {
+                        // Add level bonus to score
+                        setScore(prevScore => prevScore + levels[currentLevel].difficulty * 100);
+                        setGameState('levelComplete');
+                        setRocketPosition(rocketPosition + 1);
+                    } else {
+                        setCurrentQuestion(currentQuestion + 1);
+                        setShowFeedback(false);
+                        setSelectedAnswer(null);
+                    }
+                }, 2000);
+            };
 
-            // 3. Optional – in‑game HUD next to score if desired.
+            const startGame = () => {
+                if (playerName) {
+                    setGameState('levelSelect');
+                } else {
+                    setGameState('nameEntry');
+                }
+                setScore(0);
+                
+                // Initialize audio on game start (helps with mobile browsers)
+                if (!audioContext) {
+                    try {
+                        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                        setAudioContext(ctx);
+                        ctx.resume();
+                    } catch (e) {
+                        console.log('Audio context not available');
+                    }
+                }
+                
+                // Warm up speech synthesis
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.getVoices();
+                }
+            };
 
-            /* --------------------------------------------------*/
+            const startLevel = (levelIndex) => {
+                setGameState('playing');
+                setCurrentLevel(levelIndex);
+                setCurrentQuestion(0);
+                setLives(3);
+                setRocketPosition(levelIndex);
+                setSelectedAnswer(null);
+                setShowFeedback(false);
+                setIsCorrect(false);
+                setShowStars(false);
+                
+                // Resume audio context if suspended (common on mobile)
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+            };
 
-            /*  All remaining original component code stays the
-                same, except for the three integration spots:     
-                a) call registerFinalScore(score) in game‑over
-                   and victory flows
-                b) show {totalPoints} in the menu / level‑select
-                   screens.
-                c) reset totalPoints to 0 when player switches.
-            ---------------------------------------------------*/
+            // Play victory sound
+            const playVictorySound = () => {
+                if (audioContext && audioContext.state === 'running') {
+                    const notes = [523, 659, 784, 880, 1047]; // C5, E5, G5, A5, C6
+                    notes.forEach((freq, i) => {
+                        setTimeout(() => playSound(freq, 0.3), i * 150);
+                    });
+                }
+            };
+
+            const nextLevel = () => {
+                if (currentLevel < levels.length - 1) {
+                    setCurrentLevel(currentLevel + 1);
+                    setGameState('playing');
+                    setLives(3);
+                    setCurrentQuestion(0);
+                    setSelectedAnswer(null);
+                    setShowFeedback(false);
+                    setIsCorrect(false);
+                    setShowStars(false);
+                } else {
+                    // Check if new high score
+                    if (score > highScore) {
+                        setHighScore(score);
+                    }
+                    setGameState('victory');
+                    playVictorySound();
+                }
+            };
+
+            if (gameState === 'menu') {
+                return (
+                    <div className="min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-black flex items-center justify-center p-4">
+                        <div className="bg-blue-800 bg-opacity-90 rounded-3xl p-8 max-w-md w-full text-center animate-pulse">
+                            <h1 className="text-5xl font-bold text-yellow-300 mb-4">Space Math Adventure</h1>
+                            <div className="text-6xl mb-6">🚀</div>
+                            <p className="text-white text-xl mb-8">Journey through space while learning math!</p>
+                            {playerName && (
+                                <div className="mb-6">
+                                    <p className="text-white text-lg">Welcome back, <span className="text-yellow-300 font-bold">{playerName}!</span></p>
+                                    <p className="text-white">High Score: <span className="text-yellow-300 font-bold">{highScore}</span></p>
+                                </div>
+                            )}
+                            <button
+                                onClick={startGame}
+                                className="bg-green-500 hover:bg-green-600 text-white text-2xl font-bold py-4 px-8 rounded-full transform hover:scale-110 transition-all duration-200 shadow-lg"
+                            >
+                                Start Mission
+                            </button>
+                            {playerName && (
+                                <button
+                                    onClick={() => {
+                                        setPlayerName('');
+                                        setHighScore(0);
+                                    }}
+                                    className="mt-4 block mx-auto text-gray-400 hover:text-white text-sm underline"
+                                >
+                                    Change Player
+                                </button>
+                            )}
+                            <p className="text-gray-300 text-sm mt-4">🔊 Tap speaker icon to hear questions</p>
+                            <p className="text-gray-400 text-xs mt-2">Sound works best with volume turned up!</p>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (gameState === 'nameEntry') {
+                return (
+                    <div className="min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-black flex items-center justify-center p-4">
+                        <div className="bg-blue-800 bg-opacity-90 rounded-3xl p-8 max-w-md w-full text-center">
+                            <h2 className="text-4xl font-bold text-yellow-300 mb-4">Who's Playing?</h2>
+                            <div className="text-6xl mb-6">👨‍🚀</div>
+                            <input
+                                type="text"
+                                placeholder="Enter your name"
+                                value={playerName}
+                                onChange={(e) => setPlayerName(e.target.value.slice(0, 20))}
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter' && playerName.trim()) {
+                                        setGameState('levelSelect');
+                                    }
+                                }}
+                                className="w-full px-4 py-3 text-2xl text-center bg-white bg-opacity-20 text-white placeholder-gray-300 rounded-2xl mb-6 focus:outline-none focus:ring-4 focus:ring-yellow-400"
+                                autoFocus
+                            />
+                            <button
+                                onClick={() => {
+                                    if (playerName.trim()) {
+                                        setGameState('levelSelect');
+                                    }
+                                }}
+                                disabled={!playerName.trim()}
+                                className={`text-white text-xl font-bold py-3 px-8 rounded-full transform transition-all duration-200 ${
+                                    playerName.trim() 
+                                        ? 'bg-green-500 hover:bg-green-600 hover:scale-110' 
+                                        : 'bg-gray-600 cursor-not-allowed'
+                                }`}
+                            >
+                                Start Adventure
+                            </button>
+                            <button
+                                onClick={() => setGameState('menu')}
+                                className="mt-4 block mx-auto text-gray-400 hover:text-white text-sm underline"
+                            >
+                                Back
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (gameState === 'levelSelect') {
+                return (
+                    <div className="min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-black p-4">
+                        <div className="max-w-4xl mx-auto">
+                            <div className="text-center mb-6">
+                                <h1 className="text-4xl font-bold text-yellow-300 mb-2">Choose Your Destination</h1>
+                                <p className="text-white text-lg">Player: <span className="text-yellow-300">{playerName}</span> | High Score: <span className="text-yellow-300">{highScore}</span></p>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                {levels.map((level, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => startLevel(index)}
+                                        className="bg-blue-800 bg-opacity-90 hover:bg-blue-700 rounded-2xl p-4 transform hover:scale-105 transition-all duration-200"
+                                    >
+                                        <div className="text-4xl mb-2">{level.planet}</div>
+                                        <h3 className="text-white font-bold text-lg">{level.name}</h3>
+                                        <p className="text-yellow-300 text-sm">Level {index + 1}</p>
+                                        <p className="text-gray-300 text-xs mt-1">
+                                            {level.type === 'addition-basic' && 'Basic Addition'}
+                                            {level.type === 'addition-advanced' && 'Advanced Addition'}
+                                            {level.type === 'subtraction-basic' && 'Subtraction'}
+                                            {level.type === 'multiplication-easy' && 'Times 2 & 3'}
+                                            {level.type === 'multiplication-hard' && 'Times Tables'}
+                                            {level.type === 'counting-ones' && 'Count by 1s'}
+                                            {level.type === 'counting-fives' && 'Count by 5s'}
+                                            {level.type === 'counting-tens' && 'Count by 10s'}
+                                            {level.type === 'patterns' && 'Easy Patterns'}
+                                            {level.type === 'patterns-hard' && 'Hard Patterns'}
+                                            {level.type === 'comparison' && 'Greater/Less Than'}
+                                        </p>
+                                        <div className="flex justify-center mt-2">
+                                            {[...Array(level.difficulty)].map((_, i) => (
+                                                <span key={i} className="text-yellow-400 text-xs">⭐</span>
+                                            ))}
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                            <button
+                                onClick={() => setGameState('menu')}
+                                className="mt-8 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-full mx-auto block"
+                            >
+                                Back to Menu
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (gameState === 'gameOver') {
+                return (
+                    <div className="min-h-screen bg-gradient-to-b from-red-900 via-purple-900 to-black flex items-center justify-center p-4">
+                        <div className="bg-red-800 bg-opacity-90 rounded-3xl p-8 max-w-md w-full text-center">
+                            <h2 className="text-4xl font-bold text-white mb-4">Mission Failed!</h2>
+                            <div className="text-6xl mb-6">💥</div>
+                            <p className="text-white text-xl mb-4">Keep trying, {playerName}!</p>
+                            <p className="text-yellow-300 text-2xl mb-2">Final Score: {score}</p>
+                            {score === highScore && score > 0 && (
+                                <p className="text-yellow-300 text-lg mb-6">New High Score!</p>
+                            )}
+                            <div className="flex flex-col gap-3">
+                                <button
+                                    onClick={() => startLevel(currentLevel)}
+                                    className="bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold py-3 px-6 rounded-full transform hover:scale-110 transition-all duration-200"
+                                >
+                                    Try Again
+                                </button>
+                                <button
+                                    onClick={() => setGameState('levelSelect')}
+                                    className="bg-purple-500 hover:bg-purple-600 text-white text-lg font-bold py-2 px-4 rounded-full transform hover:scale-105 transition-all duration-200"
+                                >
+                                    Choose Different Level
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (gameState === 'victory') {
+                return (
+                    <div className="min-h-screen bg-gradient-to-b from-purple-900 via-pink-600 to-orange-500 flex items-center justify-center p-4 relative overflow-hidden">
+                        {/* Confetti */}
+                        {[...Array(10)].map((_, i) => (
+                            <div key={i} className="confetti"></div>
+                        ))}
+                        
+                        {/* Dancing aliens */}
+                        <div className="absolute top-10 left-10 text-6xl animate-dance">👽</div>
+                        <div className="absolute top-20 right-20 text-5xl animate-dance-alt" style={{animationDelay: '0.5s'}}>👾</div>
+                        <div className="absolute bottom-20 left-20 text-6xl animate-dance" style={{animationDelay: '1s'}}>🛸</div>
+                        <div className="absolute bottom-10 right-10 text-5xl animate-dance-alt" style={{animationDelay: '1.5s'}}>👽</div>
+                        <div className="absolute top-1/2 left-0 text-7xl animate-dance" style={{animationDelay: '0.3s'}}>👾</div>
+                        <div className="absolute top-1/2 right-0 text-7xl animate-dance-alt" style={{animationDelay: '0.8s'}}>👽</div>
+                        <div className="absolute top-5 left-1/2 text-5xl animate-dance" style={{animationDelay: '1.2s'}}>🛸</div>
+                        <div className="absolute bottom-5 right-1/3 text-6xl animate-dance-alt" style={{animationDelay: '0.6s'}}>👾</div>
+                        
+                        {/* More floating elements */}
+                        <div className="absolute top-1/2 left-5 text-4xl animate-spin">✨</div>
+                        <div className="absolute top-1/3 right-10 text-4xl animate-spin" style={{animationDelay: '0.7s'}}>🌟</div>
+                        <div className="absolute bottom-1/3 left-10 text-4xl animate-spin" style={{animationDelay: '1.4s'}}>✨</div>
+                        
+                        <div className="bg-gradient-to-br from-yellow-400 to-pink-500 rounded-3xl p-8 max-w-2xl w-full text-center animate-zoom-in relative z-10">
+                            <h1 className="text-6xl font-bold text-white mb-4 animate-pulse">MISSION COMPLETE!</h1>
+                            <div className="flex justify-center gap-4 mb-6">
+                                <span className="text-8xl animate-bounce">🏆</span>
+                                <span className="text-8xl animate-bounce" style={{animationDelay: '0.2s'}}>🚀</span>
+                                <span className="text-8xl animate-bounce" style={{animationDelay: '0.4s'}}>🌟</span>
+                            </div>
+                            <p className="text-white text-2xl mb-4">Amazing job, {playerName}!</p>
+                            <p className="text-yellow-200 text-xl italic mb-4">"Houston, we have a math champion!"</p>
+                            
+                            <div className="bg-white bg-opacity-20 rounded-2xl p-6 mb-6">
+                                <p className="text-4xl font-bold text-yellow-100 mb-2">FINAL SCORE</p>
+                                <p className="text-7xl font-bold animate-rainbow">{score}</p>
+                                {score === highScore && (
+                                    <p className="text-2xl text-yellow-300 font-bold mt-4 animate-pulse">🎉 NEW HIGH SCORE! 🎉</p>
+                                )}
+                                <div className="flex justify-center gap-1 mt-4">
+                                    {[...Array(5)].map((_, i) => (
+                                        <span key={i} className="text-4xl animate-spin" style={{animationDelay: `${i * 0.2}s`}}>⭐</span>
+                                    ))}
+                                </div>
+                            </div>
+                            
+                            <p className="text-white text-xl mb-6">The aliens are dancing to celebrate your achievement! 🎉</p>
+                            <p className="text-yellow-100 text-lg mb-6">You visited all 11 planets and conquered every math challenge!</p>
+                            
+                            <div className="flex flex-col gap-3">
+                                <button
+                                    onClick={() => {
+                                        setScore(0);
+                                        setGameState('levelSelect');
+                                    }}
+                                    className="bg-white text-purple-600 text-xl font-bold py-3 px-6 rounded-full transform hover:scale-110 transition-all duration-200 shadow-lg"
+                                >
+                                    Play Again
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setScore(0);
+                                        setGameState('menu');
+                                    }}
+                                    className="bg-purple-600 hover:bg-purple-700 text-white text-lg font-bold py-2 px-4 rounded-full transform hover:scale-105 transition-all duration-200"
+                                >
+                                    Back to Menu
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (gameState === 'levelComplete') {
+                return (
+                    <div className="min-h-screen bg-gradient-to-b from-green-900 via-blue-900 to-black flex items-center justify-center p-4">
+                        <div className="bg-green-800 bg-opacity-90 rounded-3xl p-8 max-w-md w-full text-center">
+                            <h2 className="text-4xl font-bold text-yellow-300 mb-4">Level Complete!</h2>
+                            <div className="text-6xl mb-6">{levels[currentLevel].planet}</div>
+                            <p className="text-white text-xl mb-2">You reached {levels[currentLevel].name}!</p>
+                            <div className="flex justify-center items-center gap-2 mb-6">
+                                <Award />
+                                <span className="text-yellow-300 text-2xl font-bold">+{levels[currentLevel].difficulty * 100} bonus!</span>
+                            </div>
+                            <p className="text-white text-2xl mb-8">Total Score: {score}</p>
+                            <div className="flex flex-col gap-3">
+                                <button
+                                    onClick={nextLevel}
+                                    className="bg-purple-500 hover:bg-purple-600 text-white text-xl font-bold py-3 px-6 rounded-full transform hover:scale-110 transition-all duration-200"
+                                >
+                                    {currentLevel < levels.length - 1 ? 'Next Planet' : 'Complete Mission'}
+                                </button>
+                                <button
+                                    onClick={() => setGameState('levelSelect')}
+                                    className="bg-blue-500 hover:bg-blue-600 text-white text-lg font-bold py-2 px-4 rounded-full transform hover:scale-105 transition-all duration-200"
+                                >
+                                    Choose Different Level
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-black p-4">
+                    <div className="max-w-4xl mx-auto mb-6">
+                        <div className="flex justify-between items-center bg-blue-800 bg-opacity-80 rounded-2xl p-4">
+                            <div className="flex items-center gap-4">
+                                <button
+                                    onClick={() => setGameState('levelSelect')}
+                                    className="bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-lg transition-all duration-200"
+                                    title="Back to Level Select"
+                                >
+                                    ← Levels
+                                </button>
+                                <div className="text-3xl">{levels[currentLevel].planet}</div>
+                                <div>
+                                    <h3 className="text-white font-bold">{levels[currentLevel].name}</h3>
+                                    <p className="text-yellow-300">Level {currentLevel + 1}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-6">
+                                <div className="text-right">
+                                    <p className="text-gray-300 text-sm">{playerName}</p>
+                                    <div className="flex items-center gap-2">
+                                        <Star />
+                                        <span className="text-white text-xl font-bold">{score}</span>
+                                    </div>
+                                </div>
+                                <div className="flex gap-1">
+                                    {[...Array(3)].map((_, i) => (
+                                        <Heart key={i} filled={i < lives} />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="max-w-4xl mx-auto mb-8">
+                        <div className="bg-gray-700 rounded-full h-4 overflow-hidden">
+                            <div
+                                className="bg-gradient-to-r from-green-400 to-blue-500 h-full transition-all duration-500"
+                                style={{ width: `${(currentQuestion / 10) * 100}%` }}
+                            />
+                        </div>
+                        <p className="text-white text-center mt-2">Question {currentQuestion + 1} of 10</p>
+                    </div>
+
+                    {questions[currentQuestion] && (
+                        <div className="max-w-2xl mx-auto">
+                            <div className="bg-white bg-opacity-95 rounded-3xl p-8 mb-6 relative overflow-hidden">
+                                {showStars && (
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                        <Sparkles />
+                                    </div>
+                                )}
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-3xl font-bold text-gray-800">
+                                        {questions[currentQuestion].question}
+                                    </h2>
+                                    <button
+                                        onClick={speakQuestion}
+                                        className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-full transition-all duration-200"
+                                    >
+                                        <Volume2 />
+                                    </button>
+                                </div>
+                                
+                                <div className="grid grid-cols-3 gap-4">
+                                    {questions[currentQuestion].options.map((option, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => handleAnswer(option)}
+                                            disabled={showFeedback}
+                                            className={`
+                                                py-6 px-4 rounded-2xl text-2xl font-bold transition-all duration-200 transform
+                                                ${showFeedback && option === questions[currentQuestion].correctAnswer
+                                                    ? 'bg-green-500 text-white scale-110 animate-bounce'
+                                                    : showFeedback && option === selectedAnswer && !isCorrect
+                                                    ? 'bg-red-500 text-white animate-pulse'
+                                                    : showFeedback
+                                                    ? 'bg-gray-300 text-gray-500'
+                                                    : 'bg-blue-500 hover:bg-blue-600 text-white hover:scale-105'
+                                                }
+                                            `}
+                                        >
+                                            {option}
+                                        </button>
+                                    ))}
+                                </div>
+                                
+                                {showFeedback && (
+                                    <div className={`mt-6 text-center text-2xl font-bold ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                                        {isCorrect ? '🌟 Correct! Great job! 🌟' : '❌ Try again next time!'}
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div className="relative h-20">
+                                <div
+                                    className="absolute bottom-0 text-5xl transform transition-all duration-1000"
+                                    style={{ left: `${(currentQuestion / 10) * 100}%` }}
+                                >
+                                    <div className={`${showFeedback && isCorrect ? 'animate-bounce' : ''}`}>
+                                        🚀
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
         };
 
         ReactDOM.render(<SpaceMathGame />, document.getElementById('root'));
     </script>
+    <!-- 
+    NOTE: Player data (name and high score) is only saved during the current session.
+    To enable saving between sessions when hosting this game on your own server,
+    uncomment the localStorage code at the beginning of the script section.
+    -->
 </body>
 </html>
