@@ -34,6 +34,41 @@
             to { transform: rotate(360deg); }
         }
         .animate-spin { animation: spin 1s linear infinite; }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-20px) rotate(-5deg); }
+            66% { transform: translateY(-10px) rotate(5deg); }
+        }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #f0f;
+            animation: confetti-fall 3s linear infinite;
+        }
+        .confetti:nth-child(1) { left: 10%; animation-delay: 0s; background: #ff0; }
+        .confetti:nth-child(2) { left: 20%; animation-delay: 0.3s; background: #0ff; }
+        .confetti:nth-child(3) { left: 30%; animation-delay: 0.6s; background: #f0f; }
+        .confetti:nth-child(4) { left: 40%; animation-delay: 0.9s; background: #0f0; }
+        .confetti:nth-child(5) { left: 50%; animation-delay: 1.2s; background: #ff0; }
+        .confetti:nth-child(6) { left: 60%; animation-delay: 1.5s; background: #f00; }
+        .confetti:nth-child(7) { left: 70%; animation-delay: 1.8s; background: #0ff; }
+        .confetti:nth-child(8) { left: 80%; animation-delay: 2.1s; background: #f0f; }
+        .confetti:nth-child(9) { left: 90%; animation-delay: 2.4s; background: #0f0; }
+        .confetti:nth-child(10) { left: 95%; animation-delay: 2.7s; background: #ff0; }
+        
+        @keyframes zoom-in {
+            0% { transform: scale(0) rotate(180deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        .animate-zoom-in { animation: zoom-in 0.5s ease-out; }
     </style>
 </head>
 <body>
@@ -421,6 +456,16 @@
                 }
             };
 
+            // Play victory sound
+            const playVictorySound = () => {
+                if (audioContext && audioContext.state === 'running') {
+                    const notes = [523, 659, 784, 880, 1047]; // C5, E5, G5, A5, C6
+                    notes.forEach((freq, i) => {
+                        setTimeout(() => playSound(freq, 0.3), i * 150);
+                    });
+                }
+            };
+
             const nextLevel = () => {
                 if (currentLevel < levels.length - 1) {
                     setCurrentLevel(currentLevel + 1);
@@ -432,7 +477,8 @@
                     setIsCorrect(false);
                     setShowStars(false);
                 } else {
-                    setGameState('menu');
+                    setGameState('victory');
+                    playVictorySound();
                 }
             };
 
@@ -529,10 +575,75 @@
                 );
             }
 
+            if (gameState === 'victory') {
+                return (
+                    <div className="min-h-screen bg-gradient-to-b from-purple-900 via-pink-600 to-orange-500 flex items-center justify-center p-4 relative overflow-hidden">
+                        {/* Confetti */}
+                        {[...Array(10)].map((_, i) => (
+                            <div key={i} className="confetti"></div>
+                        ))}
+                        
+                        {/* Floating aliens */}
+                        <div className="absolute top-10 left-10 text-6xl animate-float">👽</div>
+                        <div className="absolute top-20 right-20 text-5xl animate-float" style={{animationDelay: '0.5s'}}>👾</div>
+                        <div className="absolute bottom-20 left-20 text-6xl animate-float" style={{animationDelay: '1s'}}>🛸</div>
+                        <div className="absolute bottom-10 right-10 text-5xl animate-float" style={{animationDelay: '1.5s'}}>👽</div>
+                        
+                        {/* More floating elements */}
+                        <div className="absolute top-1/2 left-5 text-4xl animate-spin">✨</div>
+                        <div className="absolute top-1/3 right-10 text-4xl animate-spin" style={{animationDelay: '0.7s'}}>🌟</div>
+                        <div className="absolute bottom-1/3 left-10 text-4xl animate-spin" style={{animationDelay: '1.4s'}}>✨</div>
+                        
+                        <div className="bg-gradient-to-br from-yellow-400 to-pink-500 rounded-3xl p-8 max-w-2xl w-full text-center animate-zoom-in relative z-10">
+                            <h1 className="text-6xl font-bold text-white mb-4 animate-pulse">MISSION COMPLETE!</h1>
+                            <div className="flex justify-center gap-4 mb-6">
+                                <span className="text-8xl animate-bounce">🏆</span>
+                                <span className="text-8xl animate-bounce" style={{animationDelay: '0.2s'}}>🚀</span>
+                                <span className="text-8xl animate-bounce" style={{animationDelay: '0.4s'}}>🌟</span>
+                            </div>
+                            <p className="text-white text-2xl mb-4">You've mastered space math!</p>
+                            
+                            <div className="bg-white bg-opacity-20 rounded-2xl p-6 mb-6">
+                                <p className="text-4xl font-bold text-yellow-100 mb-2">FINAL SCORE</p>
+                                <p className="text-7xl font-bold text-white animate-pulse">{score}</p>
+                                <div className="flex justify-center gap-1 mt-4">
+                                    {[...Array(5)].map((_, i) => (
+                                        <span key={i} className="text-4xl animate-spin" style={{animationDelay: `${i * 0.2}s`}}>⭐</span>
+                                    ))}
+                                </div>
+                            </div>
+                            
+                            <p className="text-white text-xl mb-8">The aliens are celebrating your achievement! 🎉</p>
+                            
+                            <div className="flex flex-col gap-3">
+                                <button
+                                    onClick={() => {
+                                        setScore(0);
+                                        setGameState('levelSelect');
+                                    }}
+                                    className="bg-white text-purple-600 text-xl font-bold py-3 px-6 rounded-full transform hover:scale-110 transition-all duration-200 shadow-lg"
+                                >
+                                    Play Again
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setScore(0);
+                                        setGameState('menu');
+                                    }}
+                                    className="bg-purple-600 hover:bg-purple-700 text-white text-lg font-bold py-2 px-4 rounded-full transform hover:scale-105 transition-all duration-200"
+                                >
+                                    Back to Menu
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
             if (gameState === 'levelComplete') {
                 return (
                     <div className="min-h-screen bg-gradient-to-b from-green-900 via-blue-900 to-black flex items-center justify-center p-4">
-                        <div className="bg-green-800 bg-opacity-90 rounded-3xl p-8 max-w-md w-full text-center animate-bounce">
+                        <div className="bg-green-800 bg-opacity-90 rounded-3xl p-8 max-w-md w-full text-center">
                             <h2 className="text-4xl font-bold text-yellow-300 mb-4">Level Complete!</h2>
                             <div className="text-6xl mb-6">{levels[currentLevel].planet}</div>
                             <p className="text-white text-xl mb-2">You reached {levels[currentLevel].name}!</p>
