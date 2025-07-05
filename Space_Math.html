@@ -96,6 +96,51 @@
             const [questions, setQuestions] = useState([]);
             const [rocketPosition, setRocketPosition] = useState(0);
             const [showStars, setShowStars] = useState(false);
+            const [audioContext, setAudioContext] = useState(null);
+
+            // Initialize audio context on first user interaction
+            useEffect(() => {
+                const initAudio = () => {
+                    if (!audioContext) {
+                        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                        setAudioContext(ctx);
+                    }
+                };
+                window.addEventListener('click', initAudio, { once: true });
+                return () => window.removeEventListener('click', initAudio);
+            }, [audioContext]);
+
+            // Play sound effect
+            const playSound = (frequency, duration) => {
+                if (audioContext && audioContext.state === 'running') {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.value = frequency;
+                    oscillator.type = 'sine';
+                    
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+                    
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + duration);
+                }
+            };
+
+            // Play correct sound
+            const playCorrectSound = () => {
+                playSound(523, 0.1); // C5
+                setTimeout(() => playSound(659, 0.1), 100); // E5
+                setTimeout(() => playSound(784, 0.2), 200); // G5
+            };
+
+            // Play incorrect sound
+            const playIncorrectSound = () => {
+                playSound(200, 0.3); // Low tone
+            };
 
             const levels = [
                 { name: 'Earth Orbit', type: 'addition-basic', planet: '🌍', difficulty: 1 },
@@ -253,11 +298,54 @@
             }, [currentLevel, gameState]);
 
             const speakQuestion = () => {
-                if ('speechSynthesis' in window && questions[currentQuestion]) {
-                    const utterance = new SpeechSynthesisUtterance(questions[currentQuestion].question.replace('?', ''));
-                    utterance.rate = 0.8;
-                    utterance.pitch = 1.2;
-                    window.speechSynthesis.speak(utterance);
+                if (!('speechSynthesis' in window)) {
+                    alert('Sorry, your browser does not support text-to-speech!');
+                    return;
+                }
+                
+                // Cancel any ongoing speech
+                window.speechSynthesis.cancel();
+                
+                if (questions[currentQuestion]) {
+                    const text = questions[currentQuestion].question
+                        .replace('?', '')
+                        .replace('×', ' times ')
+                        .replace('Pattern:', 'What comes next in the pattern');
+                    
+                    // For Fire tablets and mobile browsers
+                    const speak = () => {
+                        const utterance = new SpeechSynthesisUtterance(text);
+                        utterance.rate = 0.8;
+                        utterance.pitch = 1.0;
+                        utterance.volume = 1.0;
+                        utterance.lang = 'en-US';
+                        
+                        // Try to use a specific voice if available
+                        const voices = window.speechSynthesis.getVoices();
+                        if (voices.length > 0) {
+                            // Prefer English voices
+                            const englishVoice = voices.find(voice => voice.lang.startsWith('en'));
+                            if (englishVoice) {
+                                utterance.voice = englishVoice;
+                            }
+                        }
+                        
+                        utterance.onerror = (event) => {
+                            console.error('Speech error:', event);
+                            alert('Question: ' + text);
+                        };
+                        
+                        window.speechSynthesis.speak(utterance);
+                    };
+                    
+                    // If voices aren't loaded yet, wait for them
+                    if (window.speechSynthesis.getVoices().length === 0) {
+                        window.speechSynthesis.onvoiceschanged = () => {
+                            speak();
+                        };
+                    } else {
+                        speak();
+                    }
                 }
             };
 
@@ -272,9 +360,11 @@
                 if (correct) {
                     setScore(score + (levels[currentLevel].difficulty * 10));
                     setShowStars(true);
+                    playCorrectSound();
                     setTimeout(() => setShowStars(false), 1000);
                 } else {
                     setLives(lives - 1);
+                    playIncorrectSound();
                 }
                 
                 setTimeout(() => {
@@ -296,6 +386,22 @@
             const startGame = () => {
                 setGameState('levelSelect');
                 setScore(0);
+                
+                // Initialize audio on game start (helps with mobile browsers)
+                if (!audioContext) {
+                    try {
+                        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                        setAudioContext(ctx);
+                        ctx.resume();
+                    } catch (e) {
+                        console.log('Audio context not available');
+                    }
+                }
+                
+                // Warm up speech synthesis
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.getVoices();
+                }
             };
 
             const startLevel = (levelIndex) => {
@@ -308,6 +414,11 @@
                 setShowFeedback(false);
                 setIsCorrect(false);
                 setShowStars(false);
+                
+                // Resume audio context if suspended (common on mobile)
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
             };
 
             const nextLevel = () => {
@@ -338,6 +449,8 @@
                             >
                                 Start Mission
                             </button>
+                            <p className="text-gray-300 text-sm mt-4">🔊 Tap speaker icon to hear questions</p>
+                            <p className="text-gray-400 text-xs mt-2">Sound works best with volume turned up!</p>
                         </div>
                     </div>
                 );
