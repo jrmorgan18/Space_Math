@@ -68,7 +68,21 @@
             0% { transform: scale(0) rotate(180deg); }
             100% { transform: scale(1) rotate(0deg); }
         }
-        .animate-zoom-in { animation: zoom-in 0.5s ease-out; }
+        @keyframes dance {
+            0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+            25% { transform: translateY(-20px) rotate(-10deg) scale(1.1); }
+            50% { transform: translateY(0px) rotate(0deg) scale(1); }
+            75% { transform: translateY(-20px) rotate(10deg) scale(1.1); }
+        }
+        .animate-dance { animation: dance 1s ease-in-out infinite; }
+        
+        @keyframes dance-alt {
+            0%, 100% { transform: translateX(0px) rotate(0deg); }
+            25% { transform: translateX(-10px) rotate(-15deg); }
+            50% { transform: translateX(0px) rotate(0deg); }
+            75% { transform: translateX(10px) rotate(15deg); }
+        }
+        .animate-dance-alt { animation: dance-alt 0.8s ease-in-out infinite; }
     </style>
 </head>
 <body>
@@ -187,6 +201,7 @@
                 { name: 'Asteroid Field', type: 'comparison', planet: '☄️', difficulty: 4 },
                 { name: 'Alpha Centauri', type: 'multiplication-easy', planet: '⭐', difficulty: 4 },
                 { name: 'Nebula Core', type: 'addition-advanced', planet: '🌌', difficulty: 5 },
+                { name: 'Andromeda', type: 'patterns-hard', planet: '🌀', difficulty: 5 },
                 { name: 'Galaxy Center', type: 'multiplication-hard', planet: '🌠', difficulty: 5 }
             ];
 
@@ -282,12 +297,46 @@
                                 { seq: ['⭐', '⭐', '🌙', '⭐', '⭐', '?'], answer: '🌙', wrong: ['⭐', '☀️'] },
                                 { seq: ['🔺', '🔻', '🔺', '🔻', '🔺', '?'], answer: '🔻', wrong: ['🔺', '⬜'] },
                                 { seq: ['1', '2', '1', '2', '1', '?'], answer: '2', wrong: ['1', '3'] },
-                                { seq: ['🚀', '🛸', '🚀', '🛸', '?'], answer: '🚀', wrong: ['🛸', '✈️'] }
+                                { seq: ['🚀', '🛸', '🚀', '🛸', '?'], answer: '🚀', wrong: ['🛸', '✈️'] },
+                                { seq: ['A', 'B', 'A', 'B', 'A', '?'], answer: 'B', wrong: ['A', 'C'] },
+                                { seq: ['🟡', '🟡', '🔵', '🟡', '🟡', '?'], answer: '🔵', wrong: ['🟡', '🟢'] },
+                                { seq: ['3', '3', '5', '3', '3', '?'], answer: '5', wrong: ['3', '4'] },
+                                { seq: ['🎵', '🎶', '🎵', '🎶', '?'], answer: '🎵', wrong: ['🎶', '🎤'] },
+                                { seq: ['◆', '◇', '◆', '◇', '◆', '?'], answer: '◇', wrong: ['◆', '○'] },
+                                { seq: ['🍎', '🍌', '🍎', '🍌', '?'], answer: '🍎', wrong: ['🍌', '🍊'] },
+                                { seq: ['2', '4', '2', '4', '2', '?'], answer: '4', wrong: ['2', '6'] },
+                                { seq: ['♠', '♥', '♠', '♥', '?'], answer: '♠', wrong: ['♥', '♣'] },
+                                { seq: ['🌞', '🌛', '🌞', '🌛', '🌞', '?'], answer: '🌛', wrong: ['🌞', '⭐'] },
+                                { seq: ['X', 'O', 'X', 'O', 'X', '?'], answer: 'O', wrong: ['X', 'Y'] }
                             ];
                             const pattern = patterns[Math.floor(Math.random() * patterns.length)];
                             question = `Pattern: ${pattern.seq.join(' ')}`;
                             correctAnswer = pattern.answer;
                             wrongAnswers = pattern.wrong;
+                            break;
+                            
+                        case 'patterns-hard':
+                            const hardPatterns = [
+                                { seq: ['1', '2', '3', '1', '2', '?'], answer: '3', wrong: ['1', '4'] },
+                                { seq: ['🟥', '🟨', '🟦', '🟥', '🟨', '?'], answer: '🟦', wrong: ['🟥', '🟩'] },
+                                { seq: ['A', 'B', 'C', 'A', 'B', '?'], answer: 'C', wrong: ['A', 'D'] },
+                                { seq: ['2', '4', '6', '2', '4', '?'], answer: '6', wrong: ['2', '8'] },
+                                { seq: ['🌟', '🌟', '🌙', '🌟', '🌟', '🌙', '?'], answer: '🌟', wrong: ['🌙', '☀️'] },
+                                { seq: ['5', '10', '5', '10', '5', '?'], answer: '10', wrong: ['5', '15'] },
+                                { seq: ['◯', '◯', '◼', '◯', '◯', '?'], answer: '◼', wrong: ['◯', '◆'] },
+                                { seq: ['M', 'T', 'W', 'M', 'T', '?'], answer: 'W', wrong: ['M', 'T'] },
+                                { seq: ['1', '1', '2', '1', '1', '2', '?'], answer: '1', wrong: ['2', '3'] },
+                                { seq: ['🔴', '🔵', '🟢', '🔴', '🔵', '?'], answer: '🟢', wrong: ['🔴', '🟡'] },
+                                { seq: ['3', '6', '9', '3', '6', '?'], answer: '9', wrong: ['3', '12'] },
+                                { seq: ['♪', '♫', '♪', '♪', '♫', '?'], answer: '♪', wrong: ['♫', '♬'] },
+                                { seq: ['10', '20', '10', '20', '10', '?'], answer: '20', wrong: ['10', '30'] },
+                                { seq: ['Z', 'Y', 'X', 'Z', 'Y', '?'], answer: 'X', wrong: ['Z', 'W'] },
+                                { seq: ['🚗', '🚗', '🚌', '🚗', '🚗', '🚌', '?'], answer: '🚗', wrong: ['🚌', '🚙'] }
+                            ];
+                            const hardPattern = hardPatterns[Math.floor(Math.random() * hardPatterns.length)];
+                            question = `Pattern: ${hardPattern.seq.join(' ')}`;
+                            correctAnswer = hardPattern.answer;
+                            wrongAnswers = hardPattern.wrong;
                             break;
                             
                         case 'comparison':
@@ -526,7 +575,8 @@
                                             {level.type === 'counting-ones' && 'Count by 1s'}
                                             {level.type === 'counting-fives' && 'Count by 5s'}
                                             {level.type === 'counting-tens' && 'Count by 10s'}
-                                            {level.type === 'patterns' && 'Patterns'}
+                                            {level.type === 'patterns' && 'Easy Patterns'}
+                                            {level.type === 'patterns-hard' && 'Hard Patterns'}
                                             {level.type === 'comparison' && 'Greater/Less Than'}
                                         </p>
                                         <div className="flex justify-center mt-2">
@@ -583,11 +633,15 @@
                             <div key={i} className="confetti"></div>
                         ))}
                         
-                        {/* Floating aliens */}
-                        <div className="absolute top-10 left-10 text-6xl animate-float">👽</div>
-                        <div className="absolute top-20 right-20 text-5xl animate-float" style={{animationDelay: '0.5s'}}>👾</div>
-                        <div className="absolute bottom-20 left-20 text-6xl animate-float" style={{animationDelay: '1s'}}>🛸</div>
-                        <div className="absolute bottom-10 right-10 text-5xl animate-float" style={{animationDelay: '1.5s'}}>👽</div>
+                        {/* Dancing aliens */}
+                        <div className="absolute top-10 left-10 text-6xl animate-dance">👽</div>
+                        <div className="absolute top-20 right-20 text-5xl animate-dance-alt" style={{animationDelay: '0.5s'}}>👾</div>
+                        <div className="absolute bottom-20 left-20 text-6xl animate-dance" style={{animationDelay: '1s'}}>🛸</div>
+                        <div className="absolute bottom-10 right-10 text-5xl animate-dance-alt" style={{animationDelay: '1.5s'}}>👽</div>
+                        <div className="absolute top-1/2 left-0 text-7xl animate-dance" style={{animationDelay: '0.3s'}}>👾</div>
+                        <div className="absolute top-1/2 right-0 text-7xl animate-dance-alt" style={{animationDelay: '0.8s'}}>👽</div>
+                        <div className="absolute top-5 left-1/2 text-5xl animate-dance" style={{animationDelay: '1.2s'}}>🛸</div>
+                        <div className="absolute bottom-5 right-1/3 text-6xl animate-dance-alt" style={{animationDelay: '0.6s'}}>👾</div>
                         
                         {/* More floating elements */}
                         <div className="absolute top-1/2 left-5 text-4xl animate-spin">✨</div>
@@ -602,10 +656,11 @@
                                 <span className="text-8xl animate-bounce" style={{animationDelay: '0.4s'}}>🌟</span>
                             </div>
                             <p className="text-white text-2xl mb-4">You've mastered space math!</p>
+                            <p className="text-yellow-200 text-xl italic mb-4">"Houston, we have a math champion!"</p>
                             
                             <div className="bg-white bg-opacity-20 rounded-2xl p-6 mb-6">
                                 <p className="text-4xl font-bold text-yellow-100 mb-2">FINAL SCORE</p>
-                                <p className="text-7xl font-bold text-white animate-pulse">{score}</p>
+                                <p className="text-7xl font-bold animate-rainbow">{score}</p>
                                 <div className="flex justify-center gap-1 mt-4">
                                     {[...Array(5)].map((_, i) => (
                                         <span key={i} className="text-4xl animate-spin" style={{animationDelay: `${i * 0.2}s`}}>⭐</span>
@@ -613,7 +668,8 @@
                                 </div>
                             </div>
                             
-                            <p className="text-white text-xl mb-8">The aliens are celebrating your achievement! 🎉</p>
+                            <p className="text-white text-xl mb-6">The aliens are dancing to celebrate your achievement! 🎉</p>
+                            <p className="text-yellow-100 text-lg mb-6">You visited all 11 planets and conquered every math challenge!</p>
                             
                             <div className="flex flex-col gap-3">
                                 <button
