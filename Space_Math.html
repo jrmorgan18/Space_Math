@@ -165,6 +165,7 @@
             const [currentQuestion, setCurrentQuestion] = useState(0);
             const [lives, setLives] = useState(3);
             const [score, setScore] = useState(0);
+            const [levelStartScore, setLevelStartScore] = useState(0);
             const [selectedAnswer, setSelectedAnswer] = useState(null);
             const [showFeedback, setShowFeedback] = useState(false);
             const [isCorrect, setIsCorrect] = useState(false);
@@ -500,11 +501,16 @@
                         if (score > highScore) {
                             setHighScore(score);
                         }
-                        setTotalPoints(prev => prev + score);
+                        const earned = score - levelStartScore;
+                        setTotalPoints(prev => prev + earned);
                         setGameState('gameOver');
                     } else if (currentQuestion >= 9) {
+                        const bonus = levels[currentLevel].difficulty * 100;
+                        const earned = (score - levelStartScore) + bonus;
                         // Add level bonus to score
-                        setScore(prevScore => prevScore + levels[currentLevel].difficulty * 100);
+                        setScore(prevScore => prevScore + bonus);
+                        setTotalPoints(prev => prev + earned);
+                        setLevelStartScore(score + bonus);
                         setGameState('levelComplete');
                         setRocketPosition(rocketPosition + 1);
                     } else {
@@ -522,6 +528,7 @@
                     setGameState('nameEntry');
                 }
                 setScore(0);
+                setLevelStartScore(0);
                 
                 // Initialize audio on game start (helps with mobile browsers)
                 if (!audioContext) {
@@ -546,6 +553,7 @@
                 setCurrentQuestion(0);
                 setLives(3);
                 setRocketPosition(levelIndex);
+                setLevelStartScore(score);
                 setSelectedAnswer(null);
                 setShowFeedback(false);
                 setIsCorrect(false);
@@ -582,7 +590,6 @@
                     if (score > highScore) {
                         setHighScore(score);
                     }
-                    setTotalPoints(prev => prev + score);
                     setGameState('victory');
                     playVictorySound();
                 }
