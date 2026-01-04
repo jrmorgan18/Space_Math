@@ -4,14 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Space Math Adventure</title>
+    <meta name="application-name" content="Space Math Adventure">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Space Math">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#4A5568">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🚀</text></svg>">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%234A5568'/><text y='0.9em' x='0.1em' font-size='80'>🚀</text></svg>">
-    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Space%20Math%20Adventure%22,%22short_name%22:%22Space%20Math%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22theme_color%22:%22%234A5568%22,%22background_color%22:%22%231a202c%22,%22icons%22:[{%22src%22:%22data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%234A5568'/><text y='0.9em' x='0.15em' font-size='400'>🚀</text></svg>%22,%22sizes%22:%22512x512%22,%22type%22:%22image/svg+xml%22}]}">
+    <link rel="icon" type="image/png" sizes="1024x1024" href="space_math_icon.png">
+    <link rel="apple-touch-icon" type="image/png" sizes="1024x1024" href="space_math_icon.png">
+    <link rel="manifest" href="manifest.webmanifest">
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -980,6 +981,15 @@
         };
 
         ReactDOM.render(<SpaceMathGame />, document.getElementById('root'));
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js').catch((error) => {
+                    console.error('Service worker registration failed:', error);
+                });
+            });
+        }
     </script>
     <!-- 
     NOTE: Player data (name, high score and total points) is only saved during the current session.
