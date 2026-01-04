@@ -1,7 +1,7 @@
 {
   "name": "Space Math Adventure",
   "short_name": "Space Math",
-  "start_url": "Space_Math.html",
+  "start_url": "index.html",
   "display": "standalone",
   "scope": "./",
   "background_color": "#1a202c",

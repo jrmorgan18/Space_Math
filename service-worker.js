@@ -1,6 +1,7 @@
-const CACHE_NAME = 'space-math-pwa-v1';
-const OFFLINE_FALLBACK = './Space_Math.html';
+const CACHE_NAME = 'space-math-pwa-v2';
+const OFFLINE_FALLBACK = './index.html';
 const ASSETS_TO_CACHE = [
+  './index.html',
   './Space_Math.html',
   './space_math_icon.png',
   './manifest.webmanifest'
@@ -8,7 +9,20 @@ const ASSETS_TO_CACHE = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE)).then(() => self.skipWaiting())
+    caches
+      .open(CACHE_NAME)
+      .then(async (cache) => {
+        const results = await Promise.allSettled(
+          ASSETS_TO_CACHE.map((asset) => cache.add(asset))
+        );
+
+        results.forEach((result) => {
+          if (result.status === 'rejected') {
+            console.warn('Asset failed to cache during install:', result.reason);
+          }
+        });
+      })
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -35,6 +49,10 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
+          if (!response || !response.ok) {
+            return caches.match(OFFLINE_FALLBACK);
+          }
+
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(OFFLINE_FALLBACK, responseClone));
           return response;
